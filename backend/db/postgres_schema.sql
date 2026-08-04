@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS user_stats (
     multiplier_active INTEGER DEFAULT 0,
     reactive_icon VARCHAR(50) DEFAULT '',
     badges TEXT DEFAULT '[]',
-    last_synced TIMESTAMP,
+    last_synced TIMESTAMPTZ,
     fresh_solves INTEGER DEFAULT 0,
     resubmit_count INTEGER DEFAULT 0,
     fresh_pts DOUBLE PRECISION DEFAULT 0,

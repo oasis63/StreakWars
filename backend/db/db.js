@@ -57,6 +57,8 @@ async function initDb() {
             ON CONFLICT (key) DO NOTHING
         `);
 
+        await pgPool.query(`ALTER TABLE user_stats ALTER COLUMN last_synced TYPE TIMESTAMPTZ USING last_synced::TIMESTAMPTZ`).catch(() => {});
+
         console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
         return;
