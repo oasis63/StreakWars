@@ -129,7 +129,8 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
 
                     <button
                       onClick={() => handleRemoveUser(u.user_id, u.name)}
-                      className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors"
+                      className="text-slate-600/30 hover:text-red-400 text-[10px] font-code opacity-10 hover:opacity-100 transition-all duration-300 px-2 py-0.5 rounded cursor-pointer select-none"
+                      title={`Remove ${u.name}`}
                     >
                       Remove
                     </button>
