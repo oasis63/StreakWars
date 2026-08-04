@@ -1,9 +1,11 @@
-// backend/db/db.js - PostgreSQL Database Client (Render & Local Hybrid)
+// backend/db/db.js - Persistent PostgreSQL Database Client
 const { Pool } = require('pg');
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
+
+const RENDER_POSTGRES_URL = 'postgresql://root:vdoDH7q3cflXYnb8qqlzGwlXnBwkhaEm@dpg-d9p0a1favr4c73ac5co0-a.oregon-postgres.render.com/postgres_db_gxm3';
 
 let usePostgres = false;
 let sqliteDb = null;
@@ -24,21 +26,13 @@ function convertSqlForPg(sql) {
 async function initDb() {
     if (isInitialized) return;
 
-    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
+    // Default to environment variable or hardcoded Render PostgreSQL URL
+    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL || RENDER_POSTGRES_URL;
 
-    // 1. Configure PostgreSQL pool
-    const poolConfig = dbUrl ? {
+    const poolConfig = {
         connectionString: dbUrl,
-        ssl: dbUrl.includes('render.com') || dbUrl.includes('oregon-postgres') ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 10000
-    } : {
-        host: process.env.PGHOST || 'localhost',
-        port: parseInt(process.env.PGPORT, 10) || 5432,
-        user: process.env.PGUSER || 'streakwars',
-        password: process.env.PGPASSWORD || 'streakwars_password',
-        database: process.env.PGDATABASE || 'streakwars_db',
-        ssl: process.env.PGSSL ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 5000
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 15000
     };
 
     try {
@@ -69,7 +63,7 @@ async function initDb() {
         }
     }
 
-    // 2. Fallback to SQLite (DatabaseSync)
+    // Fallback to SQLite
     try {
         const sqliteFile = path.join(__dirname, 'streakwars.db');
         sqliteDb = new DatabaseSync(sqliteFile);
