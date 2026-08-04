@@ -1,41 +1,59 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
 
 export default function Leaderboard({ leaderboard, onSelectUser }) {
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="p-8 text-center text-slate-400 font-code hud-card">
-        No active participants found in this challenge.
+      <div className="hud-card p-8 text-center font-code text-slate-400">
+        No participants registered in this challenge yet.
       </div>
     );
   }
 
-  // Calculate max score for progress bar scaling
+  // Calculate max score for relative progress bars
   const maxScore = Math.max(...leaderboard.map(u => u.score_final || 0), 1);
 
+  // Client-side date formatter using user's browser local timezone (IST)
+  const formatLastSynced = (isoString, fallbackFormatted) => {
+    if (!isoString) return fallbackFormatted || 'Just now';
+    try {
+      const dt = new Date(isoString);
+      if (isNaN(dt.getTime())) return fallbackFormatted || 'Just now';
+      return dt.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return fallbackFormatted || 'Just now';
+    }
+  };
+
   return (
-    <div className="hud-card overflow-hidden border border-slate-800 rounded-2xl font-['Inter',sans-serif]">
+    <div className="hud-card overflow-hidden border border-slate-800 shadow-2xl font-['Inter',sans-serif]">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse font-code text-xs">
+          {/* Table Header */}
           <thead>
-            <tr className="border-b border-slate-800 text-slate-400 uppercase text-[11px] font-bold tracking-wider bg-slate-900/60">
+            <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60 uppercase tracking-wider text-[11px]">
               <th className="py-3.5 px-4 w-12 text-center">#</th>
               <th className="py-3.5 px-4">PLAYER</th>
-              <th className="py-3.5 px-4 text-center">EASY</th>
-              <th className="py-3.5 px-4 text-center">MED</th>
-              <th className="py-3.5 px-4 text-center">HARD</th>
-              <th className="py-3.5 px-4 text-center">SCORE</th>
-              <th className="py-3.5 px-4 text-right">LAST SYNCED</th>
+              <th className="py-3.5 px-4 text-center w-16">EASY</th>
+              <th className="py-3.5 px-4 text-center w-16">MED</th>
+              <th className="py-3.5 px-4 text-center w-16">HARD</th>
+              <th className="py-3.5 px-4 text-center w-36">SCORE</th>
+              <th className="py-3.5 px-4 text-right w-32">LAST SYNCED</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
-            {leaderboard.map((user) => {
-              const isLast = user.is_last_place;
-              const isLeader = user.rank === 1;
 
-              // Calculate fresh & resubmit points for distribution bar
-              const freshPts = user.fresh_pts !== undefined ? user.fresh_pts : (user.fresh_solves || 0);
-              const resubPts = user.resubmit_pts !== undefined ? user.resubmit_pts : 0;
+          {/* Table Body */}
+          <tbody className="divide-y divide-slate-800/60">
+            {leaderboard.map((user, index) => {
+              const freshPts = user.fresh_pts || 0;
+              const resubPts = user.resubmit_pts || 0;
+              const totalPts = Math.max(user.score_final || 0, 1);
+
               const freshWidth = (freshPts / maxScore) * 100;
               const resubWidth = (resubPts / maxScore) * 100;
 
@@ -43,69 +61,54 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                 <tr
                   key={user.user_id}
                   onClick={() => onSelectUser && onSelectUser(user.user_id)}
-                  className={`cursor-pointer transition-colors ${
-                    isLast
-                      ? 'bg-rose-950/20 hover:bg-rose-900/30 text-rose-100'
-                      : isLeader
-                      ? 'bg-emerald-950/20 hover:bg-emerald-900/30'
-                      : 'hover:bg-slate-800/40 text-slate-200'
+                  className={`hover:bg-slate-800/40 transition-colors cursor-pointer group ${
+                    user.is_last_place ? 'bg-red-500/5' : ''
                   }`}
                 >
                   {/* Rank Badge Column */}
-                  <td className="py-4 px-4 text-center font-bold text-sm">
-                    {user.rank === 1 ? (
-                      <span className="inline-block p-1 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300">
-                        🥇
-                      </span>
-                    ) : user.rank === 2 ? (
-                      <span className="inline-block p-1 rounded-md bg-slate-400/20 border border-slate-400/40 text-slate-300">
-                        🥈
-                      </span>
-                    ) : user.rank === 3 ? (
-                      <span className="inline-block p-1 rounded-md bg-amber-700/20 border border-amber-700/40 text-amber-500">
-                        🥉
-                      </span>
-                    ) : isLast ? (
-                      <span className="inline-block p-1 rounded-md bg-rose-500/20 border border-rose-500/40 text-rose-400">
-                        💀
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">#{user.rank}</span>
-                    )}
+                  <td className="py-4 px-4 text-center font-bold">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-mono-title">
+                      {user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : user.rank}
+                    </span>
                   </td>
 
                   {/* Player Info Column */}
                   <td className="py-4 px-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm text-white font-mono-title hover:text-emerald-400 transition-colors">
-                        {user.name}
-                      </span>
-                      
-                      <span className="text-[11px] text-slate-400">
-                        @{user.leetcode_username}
+                    <div className="flex items-center gap-3">
+                      {/* Reactive Icon */}
+                      <span className="text-xl shrink-0" title={user.reactive_icon}>
+                        {user.reactive_icon || '👤'}
                       </span>
 
-                      {/* Dynamic Badges */}
-                      <div className="flex items-center gap-1">
-                        {isLeader && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300 flex items-center gap-1">
-                            LEADER 👑
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono-title font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">
+                            {user.name}
                           </span>
-                        )}
-                        {user.on_fire && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px]" title="On Fire Streak!">
-                            🔥
+                          <span className="text-slate-400 font-code text-xs">
+                            @{user.leetcode_username}
                           </span>
-                        )}
-                        {user.multiplier_active && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-[10px]" title="Underdog 1.5x Multiplier!">
-                            ⚡
-                          </span>
-                        )}
-                        {isLast && (
-                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[10px] font-bold text-rose-400 flex items-center gap-1">
-                            🥄 spoon
-                          </span>
+
+                          {/* Leader / Spoon Badges */}
+                          {user.rank === 1 && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider font-code">
+                              LEADER 👑
+                            </span>
+                          )}
+                          {user.is_last_place && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40 uppercase tracking-wider font-code">
+                              spoon 🥄
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Badges row */}
+                        {user.badges && user.badges.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            {user.badges.map((b, bIdx) => (
+                              <span key={bIdx} className="text-xs">{b}</span>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -155,9 +158,9 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                     </div>
                   </td>
 
-                  {/* Last Synced Column */}
+                  {/* Last Synced Column - Formatted in browser's local timezone */}
                   <td className="py-4 px-4 text-right text-slate-400 text-[11px]">
-                    {user.last_synced_formatted || 'Aug 4, 08:00 PM'}
+                    {formatLastSynced(user.last_synced, user.last_synced_formatted)}
                   </td>
                 </tr>
               );
