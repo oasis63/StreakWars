@@ -41,11 +41,38 @@ export default function App() {
     }
   };
 
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!data || !data.challenge_end_date) return;
+    const calculateTimeLeft = () => {
+      const parts = data.challenge_end_date.split('-');
+      let endMs = Date.now();
+      if (parts.length === 3) {
+        endMs = new Date(`${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T23:59:59.999+05:30`).getTime();
+      }
+      const diff = endMs - Date.now();
+      if (diff <= 0) {
+        setTimeLeftStr('Challenge Completed');
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeftStr(`${days}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`);
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [data]);
 
   const handleSync = async () => {
     if (syncing) return;
@@ -163,7 +190,7 @@ export default function App() {
         <div className="text-sm font-code font-bold text-slate-300 flex items-center gap-2">
           <span>Time left:</span>
           <span className="text-emerald-400 font-extrabold tracking-wide">
-            {data.days_remaining}d 20h 04m 55s
+            {timeLeftStr || `${data.days_remaining}d remaining`}
           </span>
         </div>
 

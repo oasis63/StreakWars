@@ -23,10 +23,8 @@ function getChallengeStartMs(startDateStr) {
     if (!startDateStr) return Date.now();
     const parts = startDateStr.split('-');
     if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        return new Date(year, month, day, 0, 0, 0, 0).getTime();
+        const isoStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T00:00:00.000+05:30`;
+        return new Date(isoStr).getTime();
     }
     return new Date(startDateStr).getTime();
 }
