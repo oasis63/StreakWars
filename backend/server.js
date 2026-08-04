@@ -1,4 +1,6 @@
 // backend/server.js
+process.env.TZ = process.env.TZ || 'Asia/Kolkata';
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -30,14 +32,19 @@ app.use('/api/settings', settingsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({
+        status: 'ok',
+        timezone: process.env.TZ,
+        server_time: new Date().toString(),
+        timestamp: new Date().toISOString()
+    });
 });
 
 async function startServer() {
     await initDb();
     startCron();
     app.listen(PORT, () => {
-        console.log(`🚀 StreakWars backend server listening on http://localhost:${PORT}`);
+        console.log(`🚀 StreakWars backend server listening on http://localhost:${PORT} [TZ: ${process.env.TZ}]`);
     });
 }
 

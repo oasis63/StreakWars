@@ -54,10 +54,14 @@ router.get('/', async (req, res) => {
             let lastSyncedFormatted = 'Just now';
             if (u.last_synced) {
                 const dt = new Date(u.last_synced);
-                const monthName = dt.toLocaleString('en-US', { month: 'short' });
-                const dayNum = dt.getDate();
-                const timeStr = dt.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                lastSyncedFormatted = `${monthName} ${dayNum}, ${timeStr}`;
+                lastSyncedFormatted = dt.toLocaleString('en-US', {
+                    timeZone: 'Asia/Kolkata',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
             }
 
             return {

@@ -1,4 +1,4 @@
-// backend/db/db.js - PostgreSQL Database Client (Render & Local Hybrid)
+// backend/db/db.js - PostgreSQL Database Client
 const { Pool } = require('pg');
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
@@ -19,14 +19,14 @@ function convertSqlForPg(sql) {
 }
 
 /**
- * Initialize database connection (Render PostgreSQL or SQLite fallback)
+ * Initialize database connection (PostgreSQL via env or SQLite fallback)
  */
 async function initDb() {
     if (isInitialized) return;
 
     const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
 
-    // 1. Configure PostgreSQL pool
+    // 1. Configure PostgreSQL pool if environment URL or host is defined
     const poolConfig = dbUrl ? {
         connectionString: dbUrl,
         ssl: dbUrl.includes('render.com') || dbUrl.includes('oregon-postgres') ? { rejectUnauthorized: false } : false,
@@ -57,7 +57,7 @@ async function initDb() {
             ON CONFLICT (key) DO NOTHING
         `);
 
-        console.log('🐘 PostgreSQL database (Render) connected & initialized successfully.');
+        console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
         return;
     } catch (err) {

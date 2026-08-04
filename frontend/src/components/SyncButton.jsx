@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RefreshCw, Check } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function SyncButton({ onSyncComplete, lastSynced }) {
   const [syncing, setSyncing] = useState(false);
@@ -9,7 +10,7 @@ export default function SyncButton({ onSyncComplete, lastSynced }) {
     if (syncing) return;
     setSyncing(true);
     try {
-      const res = await fetch('/api/sync', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/sync`, { method: 'POST' });
       if (res.ok) {
         setSyncedRecently(true);
         setTimeout(() => setSyncedRecently(false), 2500);

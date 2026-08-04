@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function UserProfile({ userId, onClose }) {
   const [data, setData] = useState(null);
@@ -8,7 +9,7 @@ export default function UserProfile({ userId, onClose }) {
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    fetch(`/api/profile/${userId}`)
+    fetch(`${API_BASE_URL}/api/profile/${userId}`)
       .then(res => res.json())
       .then(d => {
         setData(d);
