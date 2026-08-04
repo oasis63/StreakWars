@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { X, User, Trash2, AlertTriangle } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
-export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated }) {
+export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated, activeTheme = 'green', onThemeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTheme, setActiveTheme] = useState('green');
 
   // Delete challenge confirmation state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -191,7 +190,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
               </div>
 
               <div
-                onClick={() => setActiveTheme('green')}
+                onClick={() => onThemeChange && onThemeChange('green')}
                 className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                   activeTheme === 'green'
                     ? 'bg-emerald-500/10 border-emerald-500 text-emerald-300'
@@ -208,7 +207,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
               </div>
 
               <div
-                onClick={() => setActiveTheme('duotone')}
+                onClick={() => onThemeChange && onThemeChange('duotone')}
                 className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                   activeTheme === 'duotone'
                     ? 'bg-indigo-500/10 border-indigo-500 text-indigo-300'

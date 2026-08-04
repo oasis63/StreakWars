@@ -17,6 +17,7 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('streakwars_theme') || 'green');
 
   const prevLeaderIdRef = useRef(null);
 
@@ -120,7 +121,7 @@ export default function App() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0b101b] text-slate-100 font-['Inter',sans-serif] p-4 sm:p-8 space-y-6 max-w-6xl mx-auto">
+    <div className={`min-h-screen bg-[#0b101b] text-slate-100 font-['Inter',sans-serif] p-4 sm:p-8 space-y-6 max-w-6xl mx-auto theme-${theme}`}>
       
       {/* App Header */}
       <header className="space-y-4">
@@ -202,8 +203,10 @@ export default function App() {
         )}
       </header>
 
-      {/* Main Tab Content */}
-      <main className="space-y-6">
+      {/* Main Tab Content with Laser Scan Animation */}
+      <main className="space-y-6 relative overflow-hidden rounded-2xl p-0.5">
+        {syncing && <div className="sync-scan-line" />}
+
         {activeTab === 'leaderboard' ? (
           <Leaderboard
             leaderboard={data.leaderboard}
@@ -224,6 +227,11 @@ export default function App() {
         challengeTitle={data.challenge_title}
         leaderboard={data.leaderboard}
         onSettingsUpdated={() => fetchData()}
+        activeTheme={theme}
+        onThemeChange={(newTheme) => {
+          setTheme(newTheme);
+          localStorage.setItem('streakwars_theme', newTheme);
+        }}
       />
     </div>
   );
