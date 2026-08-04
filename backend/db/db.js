@@ -31,6 +31,8 @@ function migrate(db) {
     const alterations = [
         "ALTER TABLE user_stats ADD COLUMN fresh_solves INTEGER DEFAULT 0",
         "ALTER TABLE user_stats ADD COLUMN resubmit_count INTEGER DEFAULT 0",
+        "ALTER TABLE user_stats ADD COLUMN fresh_pts REAL DEFAULT 0",
+        "ALTER TABLE user_stats ADD COLUMN resubmit_pts REAL DEFAULT 0",
         "ALTER TABLE users ADD COLUMN is_deleted INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN emoji TEXT DEFAULT '👤'",
         "ALTER TABLE users ADD COLUMN car_emoji TEXT DEFAULT '🏎️'"

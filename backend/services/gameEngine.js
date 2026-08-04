@@ -78,39 +78,6 @@ async function syncUser(userId) {
         VALUES (?, ?, ?, ?, ?)
     `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
 
-    // Baseline snapshot
-    const baselineSnapshot = db.prepare(`
-        SELECT total_easy, total_medium, total_hard
-        FROM snapshots
-        WHERE user_id = ?
-        ORDER BY id ASC LIMIT 1
-    `).get(userId);
-
-    const baseEasy = baselineSnapshot ? baselineSnapshot.total_easy : stats.easy;
-    const baseMed = baselineSnapshot ? baselineSnapshot.total_medium : stats.medium;
-    const baseHard = baselineSnapshot ? baselineSnapshot.total_hard : stats.hard;
-
-    // Fresh capacity
-    const freshCapacity = {
-        easy: Math.max(0, stats.easy - baseEasy),
-        medium: Math.max(0, stats.medium - baseMed),
-        hard: Math.max(0, stats.hard - baseHard)
-    };
-
-    const existingFreshCounts = db.prepare(`
-        SELECT difficulty, COUNT(*) as cnt
-        FROM credited_problems
-        WHERE user_id = ? AND credit_type = 'fresh'
-        GROUP BY difficulty
-    `).all(userId);
-
-    for (const ef of existingFreshCounts) {
-        const dk = (ef.difficulty || '').toLowerCase();
-        if (freshCapacity[dk] !== undefined) {
-            freshCapacity[dk] = Math.max(0, freshCapacity[dk] - ef.cnt);
-        }
-    }
-
     // 3. Fetch recent accepted submissions from LeetCode
     const recentSubmissions = await leetcodeApi.getRecentSubmissions(user.leetcode_username, 25);
     
@@ -149,32 +116,16 @@ async function syncUser(userId) {
         const diffKey = (diffStr || 'Easy').toLowerCase();
         const subDay = getDayNumber(subMs, startDateStr);
 
-        // Default to fresh credit for any problem solved on or after challenge start date
-        let creditType = 'fresh';
-        let pointsAwarded = config.POINTS[diffKey] || 1;
+        const creditType = 'fresh';
+        const pointsAwarded = config.POINTS[diffKey] || 1;
 
-        // If fresh solve quota for this difficulty was exhausted and this is a pre-challenge solve resubmit
-        if (freshCapacity[diffKey] <= 0 && subDay >= config.RESUBMIT_HALF_CREDIT_START_DAY) {
-            const hasBaselineSnapshot = baselineSnapshot && (baseEasy > 0 || baseMed > 0 || baseHard > 0);
-            if (hasBaselineSnapshot) {
-                creditType = 'resubmit';
-                pointsAwarded = config.RESUBMIT_POINTS[diffKey] || 0.5;
-            }
-        }
-
-        if (creditType === 'fresh' && freshCapacity[diffKey] > 0) {
-            freshCapacity[diffKey]--;
-        }
-
-        if (creditType) {
-            try {
-                db.prepare(`
-                    INSERT INTO credited_problems (user_id, title_slug, difficulty, credit_type, points_awarded, day_number, credited_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                `).run(userId, sub.titleSlug, diffStr, creditType, pointsAwarded, subDay, new Date(subMs).toISOString());
-            } catch (e) {
-                // UNIQUE guard
-            }
+        try {
+            db.prepare(`
+                INSERT INTO credited_problems (user_id, title_slug, difficulty, credit_type, points_awarded, day_number, credited_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).run(userId, sub.titleSlug, diffStr, creditType, pointsAwarded, subDay, new Date(subMs).toISOString());
+        } catch (e) {
+            // UNIQUE guard
         }
     }
 }
@@ -214,12 +165,12 @@ function recomputeAllStats() {
 
             for (const item of credited) {
                 const diff = (item.difficulty || '').toLowerCase();
-                if (diff === 'easy') easySolved++;
-                if (diff === 'medium') mediumSolved++;
-                if (diff === 'hard') hardSolved++;
-
+                
                 if (item.credit_type === 'fresh') {
                     freshSolves++;
+                    if (diff === 'easy') easySolved++;
+                    if (diff === 'medium') mediumSolved++;
+                    if (diff === 'hard') hardSolved++;
                     freshPts += item.points_awarded;
                 } else if (item.credit_type === 'resubmit') {
                     resubmitCount++;
@@ -270,11 +221,13 @@ function recomputeAllStats() {
                 user_id: user.id,
                 name: user.name,
                 created_at: user.created_at,
-                easy_solved: easySolved,
-                medium_solved: mediumSolved,
-                hard_solved: hardSolved,
+                easy_solved: easySolved,      // ONLY fresh Easy solves
+                medium_solved: mediumSolved,  // ONLY fresh Medium solves
+                hard_solved: hardSolved,      // ONLY fresh Hard solves
                 fresh_solves: freshSolves,
                 resubmit_count: resubmitCount,
+                fresh_pts: freshPts,
+                resubmit_pts: resubmitPts,
                 score_raw: scoreRaw,
                 streak_bonus: streakBonus,
                 current_streak: currentStreak,
@@ -330,8 +283,9 @@ function recomputeAllStats() {
                     user_id, easy_solved, medium_solved, hard_solved,
                     score_raw, score_final, streak_bonus, current_streak,
                     longest_streak, on_fire, multiplier_active, reactive_icon,
-                    badges, last_synced, fresh_solves, resubmit_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    badges, last_synced, fresh_solves, resubmit_count,
+                    fresh_pts, resubmit_pts
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET
                     easy_solved = excluded.easy_solved,
                     medium_solved = excluded.medium_solved,
@@ -347,12 +301,15 @@ function recomputeAllStats() {
                     badges = excluded.badges,
                     last_synced = excluded.last_synced,
                     fresh_solves = excluded.fresh_solves,
-                    resubmit_count = excluded.resubmit_count
+                    resubmit_count = excluded.resubmit_count,
+                    fresh_pts = excluded.fresh_pts,
+                    resubmit_pts = excluded.resubmit_pts
             `).run(
                 calc.user_id, calc.easy_solved, calc.medium_solved, calc.hard_solved,
                 calc.score_raw, calc.score_final, calc.streak_bonus, calc.current_streak,
                 calc.longest_streak, calc.on_fire, calc.multiplier_active, reactiveIcon,
-                JSON.stringify(badges), nowIso, calc.fresh_solves, calc.resubmit_count
+                JSON.stringify(badges), nowIso, calc.fresh_solves, calc.resubmit_count,
+                calc.fresh_pts, calc.resubmit_pts
             );
         }
 
