@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export default function Leaderboard({ leaderboard, onSelectUser }) {
   if (!leaderboard || leaderboard.length === 0) {
@@ -10,26 +10,25 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
   }
 
   // Calculate max score for relative progress bars
-  const maxScore = Math.max(...leaderboard.map(u => u.score_final || 0), 1);
+  const maxScore = Math.max(...leaderboard.map((u) => u.score_final || 0), 1);
 
   // Client-side date formatter using user's browser local timezone (IST)
-  const formatLastSynced = (isoString, fallbackFormatted) => {
-    if (!isoString) return fallbackFormatted || 'Just now';
-    try {
-      const dt = new Date(isoString);
-      if (isNaN(dt.getTime())) return fallbackFormatted || 'Just now';
-      return dt.toLocaleString([], {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-    } catch (e) {
-      return fallbackFormatted || 'Just now';
-    }
-  };
+  const formatLastSynced = (isoString, fallback = "Just now") => {
+    if (!isoString) return fallback;
 
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return fallback;
+
+    return date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
   return (
     <div className="hud-card overflow-hidden border border-slate-800 shadow-2xl font-['Inter',sans-serif]">
       <div className="overflow-x-auto">
@@ -62,13 +61,19 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                   key={user.user_id}
                   onClick={() => onSelectUser && onSelectUser(user.user_id)}
                   className={`hover:bg-slate-800/40 transition-colors cursor-pointer group ${
-                    user.is_last_place ? 'bg-red-500/5' : ''
+                    user.is_last_place ? "bg-red-500/5" : ""
                   }`}
                 >
                   {/* Rank Badge Column */}
                   <td className="py-4 px-4 text-center font-bold">
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-mono-title">
-                      {user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : user.rank}
+                      {user.rank === 1
+                        ? "🥇"
+                        : user.rank === 2
+                          ? "🥈"
+                          : user.rank === 3
+                            ? "🥉"
+                            : user.rank}
                     </span>
                   </td>
 
@@ -76,8 +81,11 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
                       {/* Reactive Icon */}
-                      <span className="text-xl shrink-0" title={user.reactive_icon}>
-                        {user.reactive_icon || '👤'}
+                      <span
+                        className="text-xl shrink-0"
+                        title={user.reactive_icon}
+                      >
+                        {user.reactive_icon || "👤"}
                       </span>
 
                       <div>
@@ -106,7 +114,9 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                         {user.badges && user.badges.length > 0 && (
                           <div className="flex items-center gap-1 mt-1">
                             {user.badges.map((b, bIdx) => (
-                              <span key={bIdx} className="text-xs">{b}</span>
+                              <span key={bIdx} className="text-xs">
+                                {b}
+                              </span>
                             ))}
                           </div>
                         )}
@@ -153,14 +163,21 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                       {/* Legend Subtext: e.g. 9f +3.5r */}
                       <div className="text-[11px] font-code text-slate-400 flex items-center gap-1">
                         <span>{freshPts}f</span>
-                        {resubPts > 0 && <span className="text-[#a78bfa] font-bold">+{resubPts}r</span>}
+                        {resubPts > 0 && (
+                          <span className="text-[#a78bfa] font-bold">
+                            +{resubPts}r
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
 
                   {/* Last Synced Column - Formatted in browser's local timezone */}
                   <td className="py-4 px-4 text-right text-slate-400 text-[11px]">
-                    {formatLastSynced(user.last_synced, user.last_synced_formatted)}
+                    {formatLastSynced(
+                      user.last_synced,
+                      user.last_synced_formatted,
+                    )}
                   </td>
                 </tr>
               );
