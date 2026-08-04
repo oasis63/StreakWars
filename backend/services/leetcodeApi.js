@@ -82,7 +82,7 @@ async function getUserStats(username) {
     } catch (err) {
         console.warn(`Failed to fetch user stats for ${username}:`, err.message);
         const db = getDb();
-        const row = db.prepare(`
+        const row = await db.prepare(`
             SELECT s.total_easy, s.total_medium, s.total_hard
             FROM snapshots s
             JOIN users u ON s.user_id = u.id
@@ -137,7 +137,7 @@ async function getProblemDifficulty(titleSlug) {
     if (!titleSlug) return 'Easy';
     const db = getDb();
 
-    const cached = db.prepare(`SELECT difficulty FROM problem_cache WHERE title_slug = ?`).get(titleSlug);
+    const cached = await db.prepare(`SELECT difficulty FROM problem_cache WHERE title_slug = ?`).get(titleSlug);
     if (cached) {
         return cached.difficulty;
     }
@@ -157,7 +157,11 @@ async function getProblemDifficulty(titleSlug) {
             difficulty = data.question.difficulty;
         }
 
-        db.prepare(`INSERT OR REPLACE INTO problem_cache (title_slug, difficulty) VALUES (?, ?)`).run(titleSlug, difficulty);
+        await db.prepare(`
+            INSERT INTO problem_cache (title_slug, difficulty) VALUES (?, ?)
+            ON CONFLICT (title_slug) DO UPDATE SET difficulty = EXCLUDED.difficulty
+        `).run(titleSlug, difficulty);
+        
         return difficulty;
     } catch (err) {
         console.warn(`Failed to fetch difficulty for ${titleSlug}:`, err.message);

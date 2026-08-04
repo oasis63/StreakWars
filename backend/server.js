@@ -1,8 +1,10 @@
 // backend/server.js
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const { getDb } = require('./db/db');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { initDb } = require('./db/db');
 const { startCron } = require('./services/cron');
 
 const configRouter = require('./routes/config');
@@ -15,10 +17,6 @@ const settingsRouter = require('./routes/settings');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Database
-getDb();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -30,15 +28,17 @@ app.use('/api/users', usersRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/settings', settingsRouter);
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start Cron Scheduler
-startCron();
+async function startServer() {
+    await initDb();
+    startCron();
+    app.listen(PORT, () => {
+        console.log(`🚀 StreakWars backend server listening on http://localhost:${PORT}`);
+    });
+}
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`🚀 StreakWars backend server listening on http://localhost:${PORT}`);
-});
+startServer();

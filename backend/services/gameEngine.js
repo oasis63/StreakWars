@@ -6,9 +6,9 @@ const leetcodeApi = require('./leetcodeApi');
 /**
  * Get global challenge configuration from database
  */
-function getChallengeConfig() {
+async function getChallengeConfig() {
     const db = getDb();
-    const rows = db.prepare(`SELECT key, value FROM config`).all();
+    const rows = await db.prepare(`SELECT key, value FROM config`).all();
     const cfg = {};
     for (const r of rows) {
         cfg[r.key] = r.value;
@@ -44,27 +44,21 @@ function getDayNumber(timestampMs, startDateStr) {
 /**
  * Get current challenge day number based on today's date
  */
-function getCurrentChallengeDay() {
-    const cfg = getChallengeConfig();
+async function getCurrentChallengeDay() {
+    const cfg = await getChallengeConfig();
     if (!cfg.challenge_start_date) return 1;
     return getDayNumber(Date.now(), cfg.challenge_start_date);
 }
 
 /**
  * Process single user sync: fetch stats & recent submissions -> credited problems log
- *
- * Scoring Rules Enforced:
- * 1. STRICT DATE FILTER: Submissions before challenge_start_date (subMs < startMs) are SKIPPED completely.
- * 2. Any unique problem solved during the challenge (subMs >= startMs) for the first time -> 'fresh' (Full points: Easy=1, Med=3, Hard=5).
- * 3. Resubmit of a pre-challenge solve -> Half points (Easy=0.5, Medium=1.5, Hard=2.5) from Day 1.
- * 4. Resubmit of anything ALREADY CREDITED during the challenge -> 0 points ALWAYS (skipped via UNIQUE guard).
  */
 async function syncUser(userId) {
     const db = getDb();
-    const user = db.prepare(`SELECT * FROM users WHERE id = ? AND is_deleted = 0`).get(userId);
+    const user = await db.prepare(`SELECT * FROM users WHERE id = ? AND is_deleted = 0`).get(userId);
     if (!user) return;
 
-    const cfg = getChallengeConfig();
+    const cfg = await getChallengeConfig();
     const startDateStr = cfg.challenge_start_date || new Date().toISOString().split('T')[0];
     const startMs = getChallengeStartMs(startDateStr);
 
@@ -73,13 +67,13 @@ async function syncUser(userId) {
     const nowIso = new Date().toISOString();
 
     // 2. Insert aggregate snapshot
-    db.prepare(`
+    await db.prepare(`
         INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
         VALUES (?, ?, ?, ?, ?)
     `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
 
     // Baseline snapshot
-    const baselineSnapshot = db.prepare(`
+    const baselineSnapshot = await db.prepare(`
         SELECT total_easy, total_medium, total_hard
         FROM snapshots
         WHERE user_id = ?
@@ -97,7 +91,7 @@ async function syncUser(userId) {
         hard: Math.max(0, stats.hard - baseHard)
     };
 
-    const existingFreshCounts = db.prepare(`
+    const existingFreshCounts = await db.prepare(`
         SELECT difficulty, COUNT(*) as cnt
         FROM credited_problems
         WHERE user_id = ? AND credit_type = 'fresh'
@@ -107,7 +101,7 @@ async function syncUser(userId) {
     for (const ef of existingFreshCounts) {
         const dk = (ef.difficulty || '').toLowerCase();
         if (freshCapacity[dk] !== undefined) {
-            freshCapacity[dk] = Math.max(0, freshCapacity[dk] - ef.cnt);
+            freshCapacity[dk] = Math.max(0, freshCapacity[dk] - parseInt(ef.cnt, 10));
         }
     }
 
@@ -123,8 +117,8 @@ async function syncUser(userId) {
         // STRICT FILTER: Skip all submissions made BEFORE challenge start date
         if (subMs < startMs) continue;
 
-        // RULE 4: Resubmit of anything already credited during the challenge -> 0 points ALWAYS
-        const alreadyCredited = db.prepare(`
+        // RULE: Resubmit of anything already credited during the challenge -> 0 points ALWAYS
+        const alreadyCredited = await db.prepare(`
             SELECT id FROM credited_problems WHERE user_id = ? AND title_slug = ?
         `).get(userId, sub.titleSlug);
         if (alreadyCredited) {
@@ -132,15 +126,16 @@ async function syncUser(userId) {
         }
 
         // Deduplication guard for submission ID
-        const alreadyProcessed = db.prepare(`
+        const alreadyProcessed = await db.prepare(`
             SELECT id FROM processed_submissions WHERE user_id = ? AND submission_id = ?
         `).get(userId, sub.id);
         if (alreadyProcessed) continue;
 
         try {
-            db.prepare(`
+            await db.prepare(`
                 INSERT INTO processed_submissions (user_id, submission_id, title_slug)
                 VALUES (?, ?, ?)
+                ON CONFLICT DO NOTHING
             `).run(userId, sub.id, sub.titleSlug);
         } catch (e) {}
 
@@ -149,14 +144,14 @@ async function syncUser(userId) {
         const diffKey = (diffStr || 'Easy').toLowerCase();
         const subDay = getDayNumber(subMs, startDateStr);
 
-        // Problem solved during challenge window for first time -> fresh credit
         let creditType = 'fresh';
         let pointsAwarded = config.POINTS[diffKey] || 1;
 
         try {
-            db.prepare(`
+            await db.prepare(`
                 INSERT INTO credited_problems (user_id, title_slug, difficulty, credit_type, points_awarded, day_number, credited_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (user_id, title_slug) DO NOTHING
             `).run(userId, sub.titleSlug, diffStr, creditType, pointsAwarded, subDay, new Date(subMs).toISOString());
         } catch (e) {
             // UNIQUE guard
@@ -167,21 +162,20 @@ async function syncUser(userId) {
 /**
  * Recompute stats for all active users
  */
-function recomputeAllStats() {
+async function recomputeAllStats() {
     const db = getDb();
-    const cfg = getChallengeConfig();
+    const cfg = await getChallengeConfig();
     const startDateStr = cfg.challenge_start_date || new Date().toISOString().split('T')[0];
-    const currentDay = getCurrentChallengeDay();
+    const currentDay = await getCurrentChallengeDay();
 
-    const users = db.prepare(`SELECT * FROM users WHERE is_deleted = 0`).all();
+    const users = await db.prepare(`SELECT * FROM users WHERE is_deleted = 0`).all();
     if (!users || users.length === 0) return;
 
-    db.exec('BEGIN');
     try {
         const userCalculations = [];
 
         for (const user of users) {
-            const credited = db.prepare(`
+            const credited = await db.prepare(`
                 SELECT difficulty, credit_type, points_awarded, day_number, credited_at
                 FROM credited_problems
                 WHERE user_id = ?
@@ -199,20 +193,21 @@ function recomputeAllStats() {
 
             for (const item of credited) {
                 const diff = (item.difficulty || '').toLowerCase();
+                const pts = parseFloat(item.points_awarded) || 0;
                 
                 if (item.credit_type === 'fresh') {
                     freshSolves++;
                     if (diff === 'easy') easySolved++;
                     if (diff === 'medium') mediumSolved++;
                     if (diff === 'hard') hardSolved++;
-                    freshPts += item.points_awarded;
+                    freshPts += pts;
                 } else if (item.credit_type === 'resubmit') {
                     resubmitCount++;
-                    resubmitPts += item.points_awarded;
+                    resubmitPts += pts;
                 }
 
-                if (item.day_number > 0) {
-                    solvedDaysSet.add(item.day_number);
+                if (parseInt(item.day_number, 10) > 0) {
+                    solvedDaysSet.add(parseInt(item.day_number, 10));
                 }
             }
 
@@ -255,9 +250,9 @@ function recomputeAllStats() {
                 user_id: user.id,
                 name: user.name,
                 created_at: user.created_at,
-                easy_solved: easySolved,      // ONLY fresh Easy solves
-                medium_solved: mediumSolved,  // ONLY fresh Medium solves
-                hard_solved: hardSolved,      // ONLY fresh Hard solves
+                easy_solved: easySolved,
+                medium_solved: mediumSolved,
+                hard_solved: hardSolved,
                 fresh_solves: freshSolves,
                 resubmit_count: resubmitCount,
                 fresh_pts: freshPts,
@@ -271,7 +266,6 @@ function recomputeAllStats() {
             });
         }
 
-        // Sort pre-underdog score desc
         userCalculations.sort((a, b) => b.score_pre_underdog - a.score_pre_underdog);
         
         const lowestPreScore = userCalculations.length > 0 ? userCalculations[userCalculations.length - 1].score_pre_underdog : 0;
@@ -291,7 +285,6 @@ function recomputeAllStats() {
             calc.score_final = scoreFinal;
         }
 
-        // Final sort by score_final desc
         userCalculations.sort((a, b) => b.score_final - a.score_final);
 
         const totalPlayers = userCalculations.length;
@@ -312,7 +305,7 @@ function recomputeAllStats() {
             else if (calc.on_fire) reactiveIcon = '🔥';
             else if (rank === totalPlayers - 1) reactiveIcon = '💀';
 
-            db.prepare(`
+            await db.prepare(`
                 INSERT INTO user_stats (
                     user_id, easy_solved, medium_solved, hard_solved,
                     score_raw, score_final, streak_bonus, current_streak,
@@ -321,23 +314,23 @@ function recomputeAllStats() {
                     fresh_pts, resubmit_pts
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET
-                    easy_solved = excluded.easy_solved,
-                    medium_solved = excluded.medium_solved,
-                    hard_solved = excluded.hard_solved,
-                    score_raw = excluded.score_raw,
-                    score_final = excluded.score_final,
-                    streak_bonus = excluded.streak_bonus,
-                    current_streak = excluded.current_streak,
-                    longest_streak = excluded.longest_streak,
-                    on_fire = excluded.on_fire,
-                    multiplier_active = excluded.multiplier_active,
-                    reactive_icon = excluded.reactive_icon,
-                    badges = excluded.badges,
-                    last_synced = excluded.last_synced,
-                    fresh_solves = excluded.fresh_solves,
-                    resubmit_count = excluded.resubmit_count,
-                    fresh_pts = excluded.fresh_pts,
-                    resubmit_pts = excluded.resubmit_pts
+                    easy_solved = EXCLUDED.easy_solved,
+                    medium_solved = EXCLUDED.medium_solved,
+                    hard_solved = EXCLUDED.hard_solved,
+                    score_raw = EXCLUDED.score_raw,
+                    score_final = EXCLUDED.score_final,
+                    streak_bonus = EXCLUDED.streak_bonus,
+                    current_streak = EXCLUDED.current_streak,
+                    longest_streak = EXCLUDED.longest_streak,
+                    on_fire = EXCLUDED.on_fire,
+                    multiplier_active = EXCLUDED.multiplier_active,
+                    reactive_icon = EXCLUDED.reactive_icon,
+                    badges = EXCLUDED.badges,
+                    last_synced = EXCLUDED.last_synced,
+                    fresh_solves = EXCLUDED.fresh_solves,
+                    resubmit_count = EXCLUDED.resubmit_count,
+                    fresh_pts = EXCLUDED.fresh_pts,
+                    resubmit_pts = EXCLUDED.resubmit_pts
             `).run(
                 calc.user_id, calc.easy_solved, calc.medium_solved, calc.hard_solved,
                 calc.score_raw, calc.score_final, calc.streak_bonus, calc.current_streak,
@@ -346,10 +339,7 @@ function recomputeAllStats() {
                 calc.fresh_pts, calc.resubmit_pts
             );
         }
-
-        db.exec('COMMIT');
     } catch (err) {
-        db.exec('ROLLBACK');
         console.error('Error in recomputeAllStats:', err);
         throw err;
     }
@@ -360,7 +350,7 @@ function recomputeAllStats() {
  */
 async function syncAllUsers() {
     const db = getDb();
-    const users = db.prepare(`SELECT id FROM users WHERE is_deleted = 0`).all();
+    const users = await db.prepare(`SELECT id FROM users WHERE is_deleted = 0`).all();
     
     for (const u of users) {
         try {
@@ -371,7 +361,7 @@ async function syncAllUsers() {
         }
     }
     
-    recomputeAllStats();
+    await recomputeAllStats();
 }
 
 module.exports = {

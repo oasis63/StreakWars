@@ -25,34 +25,35 @@ router.post('/users', async (req, res) => {
         }
 
         const db = getDb();
-        const existing = db.prepare(`SELECT id, is_deleted FROM users WHERE leetcode_username = ?`).get(cleanUsername);
+        const existing = await db.prepare(`SELECT id, is_deleted FROM users WHERE leetcode_username = ?`).get(cleanUsername);
 
         let userId = null;
         if (existing) {
             if (existing.is_deleted) {
-                db.prepare(`UPDATE users SET is_deleted = 0, name = ?, color = ?, emoji = ?, car_emoji = ? WHERE id = ?`)
+                await db.prepare(`UPDATE users SET is_deleted = 0, name = ?, color = ?, emoji = ?, car_emoji = ? WHERE id = ?`)
                   .run(cleanName, userColor, userEmoji, userCar, existing.id);
                 userId = existing.id;
             } else {
                 return res.status(400).json({ error: 'User already exists in active challenge' });
             }
         } else {
-            const result = db.prepare(`
+            const result = await db.prepare(`
                 INSERT INTO users (name, leetcode_username, color, emoji, car_emoji)
                 VALUES (?, ?, ?, ?, ?)
+                RETURNING id
             `).run(cleanName, cleanUsername, userColor, userEmoji, userCar);
             userId = result.lastInsertRowid;
         }
 
         const initialStats = await getUserStats(cleanUsername);
         const nowIso = new Date().toISOString();
-        db.prepare(`
+        await db.prepare(`
             INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
             VALUES (?, ?, ?, ?, ?)
         `).run(userId, nowIso, initialStats.easy, initialStats.medium, initialStats.hard);
 
         await syncUser(userId);
-        recomputeAllStats();
+        await recomputeAllStats();
 
         res.json({ success: true, message: `Added ${cleanName} to challenge`, userId });
     } catch (err) {
@@ -62,12 +63,12 @@ router.post('/users', async (req, res) => {
 });
 
 // DELETE /api/settings/users/:userId (Soft delete user)
-router.delete('/users/:userId', (req, res) => {
+router.delete('/users/:userId', async (req, res) => {
     try {
         const userId = parseInt(req.params.userId, 10);
         const db = getDb();
-        db.prepare(`UPDATE users SET is_deleted = 1 WHERE id = ?`).run(userId);
-        recomputeAllStats();
+        await db.prepare(`UPDATE users SET is_deleted = 1 WHERE id = ?`).run(userId);
+        await recomputeAllStats();
         res.json({ success: true, message: 'User removed' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -75,7 +76,7 @@ router.delete('/users/:userId', (req, res) => {
 });
 
 // POST /api/settings/stakes (Update party stakes)
-router.post('/stakes', (req, res) => {
+router.post('/stakes', async (req, res) => {
     try {
         const { party_stakes } = req.body;
         if (!party_stakes || typeof party_stakes !== 'string') {
@@ -83,26 +84,17 @@ router.post('/stakes', (req, res) => {
         }
 
         const db = getDb();
+        const currentSettings = await db.prepare(`SELECT key, value FROM app_settings`).all();
+        const snapshotObj = {};
+        for (const s of currentSettings) snapshotObj[s.key] = s.value;
 
-        db.exec('BEGIN');
-        try {
-            const currentSettings = db.prepare(`SELECT key, value FROM app_settings`).all();
-            const snapshotObj = {};
-            for (const s of currentSettings) snapshotObj[s.key] = s.value;
+        await db.prepare(`INSERT INTO scoring_config_history (snapshot) VALUES (?)`)
+          .run(JSON.stringify(snapshotObj));
 
-            db.prepare(`INSERT INTO scoring_config_history (snapshot) VALUES (?)`)
-              .run(JSON.stringify(snapshotObj));
-
-            db.prepare(`
-                INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))
-                ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-            `).run('party_stakes', partyStakes.trim());
-
-            db.exec('COMMIT');
-        } catch (err) {
-            db.exec('ROLLBACK');
-            throw err;
-        }
+        await db.prepare(`
+            INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+        `).run('party_stakes', party_stakes.trim());
 
         res.json({ success: true, party_stakes: party_stakes.trim() });
     } catch (err) {
@@ -111,24 +103,18 @@ router.post('/stakes', (req, res) => {
 });
 
 // POST /api/settings/delete-challenge (Permanently delete challenge & clear DB)
-router.post('/delete-challenge', (req, res) => {
+router.post('/delete-challenge', async (req, res) => {
     try {
         const db = getDb();
-        db.exec('BEGIN');
-        try {
-            db.prepare(`DELETE FROM credited_problems`).run();
-            db.prepare(`DELETE FROM processed_submissions`).run();
-            db.prepare(`DELETE FROM snapshots`).run();
-            db.prepare(`DELETE FROM user_stats`).run();
-            db.prepare(`DELETE FROM users`).run();
-            db.prepare(`DELETE FROM config`).run();
-            db.prepare(`DELETE FROM app_settings`).run();
-            db.prepare(`DELETE FROM scoring_config_history`).run();
-            db.exec('COMMIT');
-        } catch (err) {
-            db.exec('ROLLBACK');
-            throw err;
-        }
+        await db.exec(`DELETE FROM credited_problems`);
+        await db.exec(`DELETE FROM processed_submissions`);
+        await db.exec(`DELETE FROM snapshots`);
+        await db.exec(`DELETE FROM user_stats`);
+        await db.exec(`DELETE FROM users`);
+        await db.exec(`DELETE FROM config`);
+        await db.exec(`DELETE FROM app_settings`);
+        await db.exec(`DELETE FROM scoring_config_history`);
+
         res.json({ success: true, message: 'Challenge deleted successfully' });
     } catch (err) {
         console.error('Error deleting challenge:', err);
@@ -137,10 +123,10 @@ router.post('/delete-challenge', (req, res) => {
 });
 
 // GET /api/settings/export (CSV export)
-router.get('/export', (req, res) => {
+router.get('/export', async (req, res) => {
     try {
         const db = getDb();
-        const rows = db.prepare(`
+        const rows = await db.prepare(`
             SELECT 
                 u.name, u.leetcode_username, s.score_final, s.score_raw, s.easy_solved,
                 s.medium_solved, s.hard_solved, s.fresh_solves, s.resubmit_count,

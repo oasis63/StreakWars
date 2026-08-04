@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+db/streakwars.db
+db/streakwars.db-wal
+db/streakwars.db-shm

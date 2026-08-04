@@ -5,10 +5,10 @@ const { getDb } = require('../db/db');
 const { getCurrentChallengeDay, recomputeAllStats } = require('../services/gameEngine');
 
 // GET /api/leaderboard
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const db = getDb();
-        const cfgRows = db.prepare(`SELECT key, value FROM config`).all();
+        const cfgRows = await db.prepare(`SELECT key, value FROM config`).all();
         const cfg = {};
         for (const r of cfgRows) cfg[r.key] = r.value;
 
@@ -17,20 +17,20 @@ router.get('/', (req, res) => {
         }
 
         try {
-            recomputeAllStats();
+            await recomputeAllStats();
         } catch (e) {
             console.error('Leaderboard recompute notice:', e.message);
         }
 
         const durationDays = parseInt(cfg.challenge_duration_days, 10) || 30;
-        const currentDay = getCurrentChallengeDay();
+        const currentDay = await getCurrentChallengeDay();
         const daysRemaining = Math.max(0, durationDays - currentDay + 1);
         const challengeEnded = currentDay > durationDays;
 
-        const stakesRow = db.prepare(`SELECT value FROM app_settings WHERE key = 'party_stakes'`).get();
+        const stakesRow = await db.prepare(`SELECT value FROM app_settings WHERE key = 'party_stakes'`).get();
         const partyStakes = stakesRow ? stakesRow.value : 'lowest score buys the party';
 
-        const usersWithStats = db.prepare(`
+        const usersWithStats = await db.prepare(`
             SELECT 
                 u.id as user_id, u.name, u.leetcode_username, u.color, u.emoji, COALESCE(u.car_emoji, '🏎️') as car_emoji,
                 s.easy_solved, s.medium_solved, s.hard_solved, s.fresh_solves, s.resubmit_count,
@@ -67,18 +67,18 @@ router.get('/', (req, res) => {
                 color: u.color || '#10b981',
                 emoji: u.emoji || '👤',
                 car_emoji: u.car_emoji || '🏎️',
-                easy_solved: u.easy_solved || 0,        // ONLY fresh Easy solves
-                medium_solved: u.medium_solved || 0,    // ONLY fresh Medium solves
-                hard_solved: u.hard_solved || 0,        // ONLY fresh Hard solves
-                fresh_solves: u.fresh_solves || 0,
-                resubmit_count: u.resubmit_count || 0,
-                fresh_pts: u.fresh_pts || 0,
-                resubmit_pts: u.resubmit_pts || 0,
-                score_raw: u.score_raw || 0,
-                score_final: u.score_final || 0,
-                streak_bonus: u.streak_bonus || 0,
-                current_streak: u.current_streak || 0,
-                longest_streak: u.longest_streak || 0,
+                easy_solved: parseInt(u.easy_solved, 10) || 0,
+                medium_solved: parseInt(u.medium_solved, 10) || 0,
+                hard_solved: parseInt(u.hard_solved, 10) || 0,
+                fresh_solves: parseInt(u.fresh_solves, 10) || 0,
+                resubmit_count: parseInt(u.resubmit_count, 10) || 0,
+                fresh_pts: parseFloat(u.fresh_pts) || 0,
+                resubmit_pts: parseFloat(u.resubmit_pts) || 0,
+                score_raw: parseFloat(u.score_raw) || 0,
+                score_final: parseFloat(u.score_final) || 0,
+                streak_bonus: parseFloat(u.streak_bonus) || 0,
+                current_streak: parseInt(u.current_streak, 10) || 0,
+                longest_streak: parseInt(u.longest_streak, 10) || 0,
                 on_fire: Boolean(u.on_fire),
                 multiplier_active: Boolean(u.multiplier_active),
                 reactive_icon: u.reactive_icon || '👤',
@@ -92,10 +92,10 @@ router.get('/', (req, res) => {
 
         const maxChartDays = Math.min(currentDay, durationDays);
 
-        const creditedRows = db.prepare(`
+        const creditedRows = await db.prepare(`
             SELECT user_id, day_number, difficulty, credit_type, COUNT(*) as count
             FROM credited_problems
-            GROUP BY user_id, day_number, difficulty
+            GROUP BY user_id, day_number, difficulty, credit_type
         `).all();
 
         const manhattanMap = {};
@@ -110,22 +110,23 @@ router.get('/', (req, res) => {
         }
 
         for (const row of creditedRows) {
-            const d = row.day_number;
+            const d = parseInt(row.day_number, 10);
             if (d >= 1 && d <= maxChartDays) {
                 const diffKey = (row.difficulty || '').toLowerCase();
                 const uId = row.user_id;
+                const cnt = parseInt(row.count, 10) || 0;
                 if (manhattanMap[d]) {
-                    if (diffKey === 'easy') manhattanMap[d][`${uId}_easy`] += row.count;
-                    if (diffKey === 'medium') manhattanMap[d][`${uId}_med`] += row.count;
-                    if (diffKey === 'hard') manhattanMap[d][`${uId}_hard`] += row.count;
-                    manhattanMap[d][`${uId}_total`] += row.count;
+                    if (diffKey === 'easy') manhattanMap[d][`${uId}_easy`] += cnt;
+                    if (diffKey === 'medium') manhattanMap[d][`${uId}_med`] += cnt;
+                    if (diffKey === 'hard') manhattanMap[d][`${uId}_hard`] += cnt;
+                    manhattanMap[d][`${uId}_total`] += cnt;
                 }
             }
         }
 
         const manhattan_data = Object.values(manhattanMap);
 
-        const allCreditedForWorm = db.prepare(`
+        const allCreditedForWorm = await db.prepare(`
             SELECT user_id, day_number, points_awarded
             FROM credited_problems
             ORDER BY day_number ASC
@@ -143,10 +144,10 @@ router.get('/', (req, res) => {
         for (const u of leaderboard) userCumulativeScore[u.user_id] = 0;
 
         for (let d = 1; d <= maxChartDays; d++) {
-            const dayCredits = allCreditedForWorm.filter(c => c.day_number === d);
+            const dayCredits = allCreditedForWorm.filter(c => parseInt(c.day_number, 10) === d);
             for (const c of dayCredits) {
                 if (userCumulativeScore[c.user_id] !== undefined) {
-                    userCumulativeScore[c.user_id] += c.points_awarded;
+                    userCumulativeScore[c.user_id] += parseFloat(c.points_awarded) || 0;
                 }
             }
             for (const u of leaderboard) {
