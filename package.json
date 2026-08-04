@@ -1,0 +1,14 @@
+{
+  "name": "streakwars-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "StreakWars Monorepo Root",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "build": "cd backend && npm install"
+  }
+}

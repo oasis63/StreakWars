@@ -1,8 +1,9 @@
-// backend/db/db.js - Hybrid PostgreSQL / SQLite Database Adapter
+// backend/db/db.js - PostgreSQL Database Client (Render & Local Hybrid)
 const { Pool } = require('pg');
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 
 let usePostgres = false;
 let sqliteDb = null;
@@ -18,20 +19,26 @@ function convertSqlForPg(sql) {
 }
 
 /**
- * Initialize database connection (PostgreSQL or SQLite fallback)
+ * Initialize database connection (Render PostgreSQL or SQLite fallback)
  */
 async function initDb() {
     if (isInitialized) return;
 
-    // 1. Try PostgreSQL connection first
-    const poolConfig = {
+    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
+
+    // 1. Configure PostgreSQL pool
+    const poolConfig = dbUrl ? {
+        connectionString: dbUrl,
+        ssl: dbUrl.includes('render.com') || dbUrl.includes('oregon-postgres') ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 10000
+    } : {
         host: process.env.PGHOST || 'localhost',
         port: parseInt(process.env.PGPORT, 10) || 5432,
         user: process.env.PGUSER || 'streakwars',
         password: process.env.PGPASSWORD || 'streakwars_password',
         database: process.env.PGDATABASE || 'streakwars_db',
-        connectionString: process.env.DATABASE_URL,
-        connectionTimeoutMillis: 2000
+        ssl: process.env.PGSSL ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 5000
     };
 
     try {
@@ -50,11 +57,11 @@ async function initDb() {
             ON CONFLICT (key) DO NOTHING
         `);
 
-        console.log('🐘 PostgreSQL database connected & initialized successfully.');
+        console.log('🐘 PostgreSQL database (Render) connected & initialized successfully.');
         isInitialized = true;
         return;
     } catch (err) {
-        console.warn(`⚠️ PostgreSQL unavailable (${err.message}). Falling back to embedded SQLite database...`);
+        console.warn(`⚠️ PostgreSQL connection failed (${err.message}). Falling back to embedded SQLite database...`);
         usePostgres = false;
         if (pgPool) {
             try { await pgPool.end(); } catch (e) {}
@@ -77,7 +84,6 @@ async function initDb() {
             sqliteDb.exec(schemaSql);
         }
 
-        // Apply SQLite alterations
         const alterations = [
             "ALTER TABLE user_stats ADD COLUMN fresh_solves INTEGER DEFAULT 0",
             "ALTER TABLE user_stats ADD COLUMN resubmit_count INTEGER DEFAULT 0",
