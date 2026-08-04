@@ -54,10 +54,10 @@ function getCurrentChallengeDay() {
  * Process single user sync: fetch stats & recent submissions -> credited problems log
  *
  * Scoring Rules Enforced:
- * 1. STRICT DATE FILTER: Submissions before challenge_start_date (subMs < startMs) are SKIPPED.
- * 2. Fresh submit on or after start date -> Full points (Easy=1, Medium=3, Hard=5)
- * 3. Resubmit of a pre-challenge solve -> Half points (Easy=0.5, Medium=1.5, Hard=2.5) from Day 1
- * 4. Resubmit of anything ALREADY CREDITED during the challenge -> 0 points ALWAYS (skipped)
+ * 1. STRICT DATE FILTER: Submissions before challenge_start_date (subMs < startMs) are SKIPPED completely.
+ * 2. Any unique problem solved during the challenge (subMs >= startMs) for the first time -> 'fresh' (Full points: Easy=1, Med=3, Hard=5).
+ * 3. Resubmit of a pre-challenge solve -> Half points (Easy=0.5, Medium=1.5, Hard=2.5) from Day 1.
+ * 4. Resubmit of anything ALREADY CREDITED during the challenge -> 0 points ALWAYS (skipped via UNIQUE guard).
  */
 async function syncUser(userId) {
     const db = getDb();
@@ -78,6 +78,39 @@ async function syncUser(userId) {
         VALUES (?, ?, ?, ?, ?)
     `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
 
+    // Baseline snapshot
+    const baselineSnapshot = db.prepare(`
+        SELECT total_easy, total_medium, total_hard
+        FROM snapshots
+        WHERE user_id = ?
+        ORDER BY id ASC LIMIT 1
+    `).get(userId);
+
+    const baseEasy = baselineSnapshot ? baselineSnapshot.total_easy : stats.easy;
+    const baseMed = baselineSnapshot ? baselineSnapshot.total_medium : stats.medium;
+    const baseHard = baselineSnapshot ? baselineSnapshot.total_hard : stats.hard;
+
+    // Fresh capacity
+    const freshCapacity = {
+        easy: Math.max(0, stats.easy - baseEasy),
+        medium: Math.max(0, stats.medium - baseMed),
+        hard: Math.max(0, stats.hard - baseHard)
+    };
+
+    const existingFreshCounts = db.prepare(`
+        SELECT difficulty, COUNT(*) as cnt
+        FROM credited_problems
+        WHERE user_id = ? AND credit_type = 'fresh'
+        GROUP BY difficulty
+    `).all(userId);
+
+    for (const ef of existingFreshCounts) {
+        const dk = (ef.difficulty || '').toLowerCase();
+        if (freshCapacity[dk] !== undefined) {
+            freshCapacity[dk] = Math.max(0, freshCapacity[dk] - ef.cnt);
+        }
+    }
+
     // 3. Fetch recent accepted submissions from LeetCode
     const recentSubmissions = await leetcodeApi.getRecentSubmissions(user.leetcode_username, 25);
     
@@ -90,7 +123,7 @@ async function syncUser(userId) {
         // STRICT FILTER: Skip all submissions made BEFORE challenge start date
         if (subMs < startMs) continue;
 
-        // RULE: Resubmit of anything already credited during the challenge -> 0 points ALWAYS
+        // RULE 4: Resubmit of anything already credited during the challenge -> 0 points ALWAYS
         const alreadyCredited = db.prepare(`
             SELECT id FROM credited_problems WHERE user_id = ? AND title_slug = ?
         `).get(userId, sub.titleSlug);
@@ -116,8 +149,9 @@ async function syncUser(userId) {
         const diffKey = (diffStr || 'Easy').toLowerCase();
         const subDay = getDayNumber(subMs, startDateStr);
 
-        const creditType = 'fresh';
-        const pointsAwarded = config.POINTS[diffKey] || 1;
+        // Problem solved during challenge window for first time -> fresh credit
+        let creditType = 'fresh';
+        let pointsAwarded = config.POINTS[diffKey] || 1;
 
         try {
             db.prepare(`

@@ -34,6 +34,7 @@ router.get('/', (req, res) => {
             SELECT 
                 u.id as user_id, u.name, u.leetcode_username, u.color, u.emoji, COALESCE(u.car_emoji, '🏎️') as car_emoji,
                 s.easy_solved, s.medium_solved, s.hard_solved, s.fresh_solves, s.resubmit_count,
+                s.fresh_pts, s.resubmit_pts,
                 s.score_raw, s.score_final, s.streak_bonus, s.current_streak, s.longest_streak,
                 s.on_fire, s.multiplier_active, s.reactive_icon, s.badges, s.last_synced
             FROM users u
@@ -50,7 +51,6 @@ router.get('/', (req, res) => {
 
             const isLast = index === usersWithStats.length - 1 && usersWithStats.length > 1;
 
-            // Formatted last synced time string
             let lastSyncedFormatted = 'Just now';
             if (u.last_synced) {
                 const dt = new Date(u.last_synced);
@@ -67,11 +67,13 @@ router.get('/', (req, res) => {
                 color: u.color || '#10b981',
                 emoji: u.emoji || '👤',
                 car_emoji: u.car_emoji || '🏎️',
-                easy_solved: u.easy_solved || 0,
-                medium_solved: u.medium_solved || 0,
-                hard_solved: u.hard_solved || 0,
+                easy_solved: u.easy_solved || 0,        // ONLY fresh Easy solves
+                medium_solved: u.medium_solved || 0,    // ONLY fresh Medium solves
+                hard_solved: u.hard_solved || 0,        // ONLY fresh Hard solves
                 fresh_solves: u.fresh_solves || 0,
                 resubmit_count: u.resubmit_count || 0,
+                fresh_pts: u.fresh_pts || 0,
+                resubmit_pts: u.resubmit_pts || 0,
                 score_raw: u.score_raw || 0,
                 score_final: u.score_final || 0,
                 streak_bonus: u.streak_bonus || 0,

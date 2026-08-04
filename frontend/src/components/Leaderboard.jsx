@@ -1,129 +1,186 @@
 import React from 'react';
+import { ExternalLink } from 'lucide-react';
 
 export default function Leaderboard({ leaderboard, onSelectUser }) {
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="text-center py-12 hud-card">
-        <p className="text-slate-400 text-sm font-code">No active participants found.</p>
+      <div className="p-8 text-center text-slate-400 font-code hud-card">
+        No active participants found in this challenge.
       </div>
     );
   }
 
-  const getRankIcon = (rank, total) => {
-    if (rank === 1) return <span className="text-xl">🥇</span>;
-    if (rank === 2) return <span className="text-xl">🥈</span>;
-    if (rank === 3) return <span className="text-xl">🥉</span>;
-    if (rank === total && total > 1) return <span className="text-xl">💀</span>;
-    return <span className="text-sm font-code font-bold text-slate-500">{rank}</span>;
-  };
+  // Calculate max score for progress bar scaling
+  const maxScore = Math.max(...leaderboard.map(u => u.score_final || 0), 1);
 
   return (
-    <div className="hud-card overflow-hidden shadow-2xl border border-slate-800">
-      {/* Table Header */}
-      <div className="grid grid-cols-12 px-6 py-3.5 bg-slate-900/80 border-b border-slate-800 text-[11px] font-bold font-code text-slate-400 uppercase tracking-wider">
-        <div className="col-span-5 sm:col-span-4">PLAYER</div>
-        <div className="col-span-2 sm:col-span-1 text-center">EASY</div>
-        <div className="col-span-2 sm:col-span-1 text-center">MED</div>
-        <div className="col-span-2 sm:col-span-1 text-center">HARD</div>
-        <div className="col-span-3 sm:col-span-3 text-right">SCORE</div>
-        <div className="hidden sm:block sm:col-span-2 text-right">LAST SYNCED</div>
+    <div className="hud-card overflow-hidden border border-slate-800 rounded-2xl font-['Inter',sans-serif]">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse font-code text-xs">
+          <thead>
+            <tr className="border-b border-slate-800 text-slate-400 uppercase text-[11px] font-bold tracking-wider bg-slate-900/60">
+              <th className="py-3.5 px-4 w-12 text-center">#</th>
+              <th className="py-3.5 px-4">PLAYER</th>
+              <th className="py-3.5 px-4 text-center">EASY</th>
+              <th className="py-3.5 px-4 text-center">MED</th>
+              <th className="py-3.5 px-4 text-center">HARD</th>
+              <th className="py-3.5 px-4 text-center">SCORE</th>
+              <th className="py-3.5 px-4 text-right">LAST SYNCED</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/60">
+            {leaderboard.map((user) => {
+              const isLast = user.is_last_place;
+              const isLeader = user.rank === 1;
+
+              // Calculate fresh & resubmit points for distribution bar
+              const freshPts = user.fresh_pts !== undefined ? user.fresh_pts : (user.fresh_solves || 0);
+              const resubPts = user.resubmit_pts !== undefined ? user.resubmit_pts : 0;
+              const freshWidth = (freshPts / maxScore) * 100;
+              const resubWidth = (resubPts / maxScore) * 100;
+
+              return (
+                <tr
+                  key={user.user_id}
+                  onClick={() => onSelectUser && onSelectUser(user.user_id)}
+                  className={`cursor-pointer transition-colors ${
+                    isLast
+                      ? 'bg-rose-950/20 hover:bg-rose-900/30 text-rose-100'
+                      : isLeader
+                      ? 'bg-emerald-950/20 hover:bg-emerald-900/30'
+                      : 'hover:bg-slate-800/40 text-slate-200'
+                  }`}
+                >
+                  {/* Rank Badge Column */}
+                  <td className="py-4 px-4 text-center font-bold text-sm">
+                    {user.rank === 1 ? (
+                      <span className="inline-block p-1 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                        🥇
+                      </span>
+                    ) : user.rank === 2 ? (
+                      <span className="inline-block p-1 rounded-md bg-slate-400/20 border border-slate-400/40 text-slate-300">
+                        🥈
+                      </span>
+                    ) : user.rank === 3 ? (
+                      <span className="inline-block p-1 rounded-md bg-amber-700/20 border border-amber-700/40 text-amber-500">
+                        🥉
+                      </span>
+                    ) : isLast ? (
+                      <span className="inline-block p-1 rounded-md bg-rose-500/20 border border-rose-500/40 text-rose-400">
+                        💀
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">#{user.rank}</span>
+                    )}
+                  </td>
+
+                  {/* Player Info Column */}
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-white font-mono-title hover:text-emerald-400 transition-colors">
+                        {user.name}
+                      </span>
+                      
+                      <span className="text-[11px] text-slate-400">
+                        @{user.leetcode_username}
+                      </span>
+
+                      {/* Dynamic Badges */}
+                      <div className="flex items-center gap-1">
+                        {isLeader && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300 flex items-center gap-1">
+                            LEADER 👑
+                          </span>
+                        )}
+                        {user.on_fire && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px]" title="On Fire Streak!">
+                            🔥
+                          </span>
+                        )}
+                        {user.multiplier_active && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-[10px]" title="Underdog 1.5x Multiplier!">
+                            ⚡
+                          </span>
+                        )}
+                        {isLast && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[10px] font-bold text-rose-400 flex items-center gap-1">
+                            🥄 spoon
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* FRESH Easy Count Column */}
+                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-emerald-400">
+                    {user.easy_solved}
+                  </td>
+
+                  {/* FRESH Medium Count Column */}
+                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-amber-400">
+                    {user.medium_solved}
+                  </td>
+
+                  {/* FRESH Hard Count Column */}
+                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-rose-400">
+                    {user.hard_solved}
+                  </td>
+
+                  {/* SCORE Column with Score Distribution Progress Bar matching Image 2 */}
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="font-mono-title font-bold text-emerald-400 text-sm tracking-wide">
+                        ({user.score_final})
+                      </div>
+
+                      {/* Segmented Distribution Bar */}
+                      <div className="w-28 h-1.5 bg-slate-800 rounded-full flex overflow-hidden my-1">
+                        <div
+                          className="bg-emerald-400 h-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, freshWidth)}%` }}
+                          title={`Fresh pts: ${freshPts}`}
+                        />
+                        <div
+                          className="bg-[#a78bfa] h-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, resubWidth)}%` }}
+                          title={`Resubmit pts: ${resubPts}`}
+                        />
+                      </div>
+
+                      {/* Legend Subtext: e.g. 9f +3.5r */}
+                      <div className="text-[11px] font-code text-slate-400 flex items-center gap-1">
+                        <span>{freshPts}f</span>
+                        {resubPts > 0 && <span className="text-[#a78bfa] font-bold">+{resubPts}r</span>}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Last Synced Column */}
+                  <td className="py-4 px-4 text-right text-slate-400 text-[11px]">
+                    {user.last_synced_formatted || 'Aug 4, 08:00 PM'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* Rows */}
-      <div className="divide-y divide-slate-800/60">
-        {leaderboard.map((player) => {
-          const isLeader = player.rank === 1;
-          const isSpoon = player.is_last_place;
-
-          return (
-            <div
-              key={player.user_id}
-              onClick={() => onSelectUser(player.user_id)}
-              className={`grid grid-cols-12 px-6 py-4 items-center cursor-pointer transition-all hover:bg-slate-800/40 ${
-                isLeader ? 'bg-indigo-950/20' : ''
-              } ${isSpoon ? 'bg-red-950/20' : ''}`}
-            >
-              {/* Player Info */}
-              <div className="col-span-5 sm:col-span-4 flex items-center gap-3">
-                <div className="w-6 flex justify-center shrink-0">
-                  {getRankIcon(player.rank, leaderboard.length)}
-                </div>
-
-                <div className="truncate">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono-title font-bold text-base text-white tracking-wide">
-                      {player.name}
-                    </span>
-                    <span className="text-xs font-code text-slate-400">
-                      @{player.leetcode_username}
-                    </span>
-
-                    {/* Dynamic Emojis / Badges */}
-                    {isLeader && (
-                      <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold text-[10px] font-code border border-amber-400/40 flex items-center gap-1">
-                        LEADER 👑
-                      </span>
-                    )}
-
-                    {isSpoon && (
-                      <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] font-code border border-rose-500/40 flex items-center gap-1">
-                        🥄 spoon
-                      </span>
-                    )}
-
-                    {player.on_fire && !isLeader && (
-                      <span className="text-xs" title="On Fire Streak">🔥</span>
-                    )}
-
-                    {player.multiplier_active && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-code">
-                        ⚡ 1.5x
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Solved Count Breakdown */}
-              <div className="col-span-2 sm:col-span-1 text-center font-code font-bold text-sm text-slate-200">
-                {player.easy_solved}
-              </div>
-              <div className="col-span-2 sm:col-span-1 text-center font-code font-bold text-sm text-amber-400">
-                {player.medium_solved}
-              </div>
-              <div className="col-span-2 sm:col-span-1 text-center font-code font-bold text-sm text-rose-400">
-                {player.hard_solved}
-              </div>
-
-              {/* Score Column */}
-              <div className="col-span-3 sm:col-span-3 text-right">
-                <div className="font-code font-bold text-lg text-emerald-400">
-                  ({player.score_final})
-                </div>
-                <div className="text-[11px] font-code text-slate-400">
-                  <span className="text-emerald-400/90">{player.fresh_solves}f</span>
-                  {player.resubmit_count > 0 && (
-                    <span className="text-indigo-400/90 ml-1">+{player.resubmit_count * 0.5}r</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Last Synced */}
-              <div className="hidden sm:block sm:col-span-2 text-right font-code text-xs text-slate-400">
-                {player.last_synced_formatted}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Footer Legend matching Screenshot 1 */}
-      <div className="px-6 py-3 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-code text-slate-400">
-        <div>
-          Easy=1pt · Med=3pts · Hard=5pts · pre-challenge resub = half pts · streak bonus every 3 days
+      {/* Footer Legend matching Screenshot 1 & Image 2 */}
+      <div className="p-3 border-t border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between text-[11px] font-code text-slate-400">
+        <div className="flex items-center gap-3">
+          <span>Easy=1pt</span>
+          <span>•</span>
+          <span>Med=3pts</span>
+          <span>•</span>
+          <span>Hard=5pts</span>
+          <span>•</span>
+          <span>pre-challenge resub = half pts</span>
+          <span>•</span>
+          <span>streak bonus every 3 days</span>
         </div>
-        <div className="font-bold text-slate-300">
-          30 days remaining
+        <div>
+          <span>30 days remaining</span>
         </div>
       </div>
     </div>

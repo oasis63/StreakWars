@@ -5,7 +5,7 @@ module.exports = {
 
     // 2. Resubmit of a pre-challenge solve -> Half points (0.5 / 1.5 / 2.5) from Day 1
     RESUBMIT_POINTS: { easy: 0.5, medium: 1.5, hard: 2.5 },
-    RESUBMIT_HALF_CREDIT_START_DAY: 1, // Active from Day 1 onwards
+    RESUBMIT_HALF_CREDIT_START_DAY: 0, // Active from Day 1 onwards
 
     // 3. Resubmit of anything already credited during the challenge -> 0 points always
     // Enforced by UNIQUE(user_id, title_slug) guard in credited_problems table
