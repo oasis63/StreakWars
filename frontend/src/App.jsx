@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Settings as SettingsIcon, RefreshCw, Check } from 'lucide-react';
+import { API_BASE_URL } from './config';
 
 import SetupForm from './components/SetupForm';
 import Leaderboard from './components/Leaderboard';
@@ -21,7 +22,7 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/leaderboard');
+      const res = await fetch(`${API_BASE_URL}/api/leaderboard`);
       const d = await res.json();
       
       if (d.leaderboard && d.leaderboard.length > 0) {
@@ -50,7 +51,7 @@ export default function App() {
     if (syncing) return;
     setSyncing(true);
     try {
-      const res = await fetch('/api/sync', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/sync`, { method: 'POST' });
       if (res.ok) {
         await fetchData();
       }

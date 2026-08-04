@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Trash2, AlertTriangle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated }) {
   const [newName, setNewName] = useState('');
@@ -27,7 +28,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
 
     setAddingUser(true);
     try {
-      const res = await fetch('/api/settings/users', {
+      const res = await fetch(`${API_BASE_URL}/api/settings/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +55,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   const handleRemoveUser = async (userId, name) => {
     if (!window.confirm(`Are you sure you want to remove ${name}?`)) return;
     try {
-      const res = await fetch(`/api/settings/users/${userId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/settings/users/${userId}`, { method: 'DELETE' });
       if (res.ok && onSettingsUpdated) {
         onSettingsUpdated();
       }
@@ -73,7 +74,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   const handleConfirmDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch('/api/settings/delete-challenge', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/settings/delete-challenge`, { method: 'POST' });
       if (res.ok) {
         setDeleteModalOpen(false);
         onClose();

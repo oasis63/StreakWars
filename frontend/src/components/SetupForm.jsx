@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, AlertCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const PRESET_CAR_EMOJIS = ['🏎️', '🚗', '🚙', '🛻', '🚕', '🏎️', '🏎️', '🏎️'];
 const PRESET_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#14b8a6'];
@@ -9,10 +10,7 @@ export default function SetupForm({ onSetupComplete }) {
   const [duration, setDuration] = useState(30);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [stakes, setStakes] = useState('lowest score buys the party');
-  const [users, setUsers] = useState([
-    // { name: 'Ashish', leetcode_username: 'ashish123' },
-    // { name: 'Rajesh', leetcode_username: 'rajesh_lc' }
-  ]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -56,7 +54,7 @@ export default function SetupForm({ onSetupComplete }) {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/config/setup', {
+      const res = await fetch(`${API_BASE_URL}/api/config/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
