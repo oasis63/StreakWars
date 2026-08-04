@@ -226,13 +226,13 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
           </div>
 
           {/* Low Opacity Delete Button at Bottom Right Corner */}
-          <div className="absolute bottom-4 right-4 z-20">
+          <div className="absolute bottom-3 right-3 z-20">
             <button
               onClick={openDeleteModal}
-              className="text-red-500/30 hover:text-red-400 text-[11px] font-code font-bold opacity-40 hover:opacity-100 transition-all flex items-center gap-1 bg-[#0b101b]/80 px-2.5 py-1 rounded-lg border border-red-500/20"
+              className="text-slate-600/40 hover:text-red-400 text-[10px] font-code opacity-10 hover:opacity-100 transition-all duration-300 flex items-center gap-1 px-2 py-1 rounded cursor-pointer select-none"
               title="Delete challenge permanently"
             >
-              <Trash2 className="w-3.5 h-3.5" /> Delete Challenge
+              <Trash2 className="w-3 h-3" /> Delete Challenge
             </button>
           </div>
         </div>
