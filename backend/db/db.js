@@ -1,11 +1,9 @@
-// backend/db/db.js - Persistent PostgreSQL Database Client
+// backend/db/db.js - PostgreSQL Database Client
 const { Pool } = require('pg');
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
-
-const RENDER_POSTGRES_URL = 'postgresql://root:vdoDH7q3cflXYnb8qqlzGwlXnBwkhaEm@dpg-d9p0a1favr4c73ac5co0-a.oregon-postgres.render.com/postgres_db_gxm3';
 
 let usePostgres = false;
 let sqliteDb = null;
@@ -21,18 +19,26 @@ function convertSqlForPg(sql) {
 }
 
 /**
- * Initialize database connection (Render PostgreSQL or SQLite fallback)
+ * Initialize database connection (PostgreSQL via env or SQLite fallback)
  */
 async function initDb() {
     if (isInitialized) return;
 
-    // Default to environment variable or hardcoded Render PostgreSQL URL
-    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL || RENDER_POSTGRES_URL;
+    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
 
-    const poolConfig = {
+    // 1. Configure PostgreSQL pool if environment URL or host is defined
+    const poolConfig = dbUrl ? {
         connectionString: dbUrl,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 15000
+        ssl: dbUrl.includes('render.com') || dbUrl.includes('oregon-postgres') ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 10000
+    } : {
+        host: process.env.PGHOST || 'localhost',
+        port: parseInt(process.env.PGPORT, 10) || 5432,
+        user: process.env.PGUSER || 'streakwars',
+        password: process.env.PGPASSWORD || 'streakwars_password',
+        database: process.env.PGDATABASE || 'streakwars_db',
+        ssl: process.env.PGSSL ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 5000
     };
 
     try {
@@ -51,7 +57,7 @@ async function initDb() {
             ON CONFLICT (key) DO NOTHING
         `);
 
-        console.log('🐘 PostgreSQL database (Render) connected & initialized successfully.');
+        console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
         return;
     } catch (err) {
@@ -63,7 +69,7 @@ async function initDb() {
         }
     }
 
-    // Fallback to SQLite
+    // 2. Fallback to SQLite (DatabaseSync)
     try {
         const sqliteFile = path.join(__dirname, 'streakwars.db');
         sqliteDb = new DatabaseSync(sqliteFile);
