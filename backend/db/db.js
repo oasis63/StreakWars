@@ -15,6 +15,9 @@ function convertSqlForPg(sql) {
     let converted = sql.replace(/\?/g, () => `$${index++}`);
     converted = converted.replace(/INSERT OR REPLACE INTO config/gi, `INSERT INTO config`);
     converted = converted.replace(/INSERT OR IGNORE INTO app_settings/gi, `INSERT INTO app_settings`);
+    if (/^\s*INSERT\s+INTO/i.test(converted) && !/RETURNING/i.test(converted)) {
+        converted += ' RETURNING *';
+    }
     return converted;
 }
 
@@ -58,6 +61,21 @@ async function initDb() {
         `);
 
         await pgPool.query(`ALTER TABLE user_stats ALTER COLUMN last_synced TYPE TIMESTAMPTZ USING last_synced::TIMESTAMPTZ`).catch(() => {});
+
+        const pgAlterations = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(255)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_code VARCHAR(10) DEFAULT '1234'",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_emoji VARCHAR(50) DEFAULT '👤'",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_color VARCHAR(50) DEFAULT '#6366f1'",
+            "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS title VARCHAR(255) DEFAULT ''",
+            "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General'",
+            "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS user_id INTEGER"
+        ];
+        for (const sql of pgAlterations) {
+            await pgPool.query(sql).catch(() => {});
+        }
 
         console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
@@ -135,9 +153,11 @@ function prepare(sql) {
             },
             run: async (...params) => {
                 const res = await pgPool.query(pgSql, params.flat());
+                const insertedRow = res.rows[0] || null;
                 return {
                     rowCount: res.rowCount,
-                    lastInsertRowid: res.rows[0] ? res.rows[0].id : null
+                    lastInsertRowid: insertedRow ? insertedRow.id : null,
+                    row: insertedRow
                 };
             }
         };
