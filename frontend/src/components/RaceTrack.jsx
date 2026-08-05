@@ -11,7 +11,7 @@ export default function RaceTrack({ leaderboard }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-mono-title font-bold text-white flex items-center gap-2">
-            🏎️ Track to Victory
+            <span className="inline-block" style={{ transform: 'scaleX(-1)' }}>🏎️</span> Track to Victory
           </h2>
         </div>
         <div className="text-xs font-code text-slate-400">
@@ -51,10 +51,13 @@ export default function RaceTrack({ leaderboard }) {
                   className="absolute z-20 transition-all duration-700 ease-out flex items-center gap-1"
                   style={{ left: `calc(${carPositionPercent}% - 12px)` }}
                 >
-                  <span className="text-2xl filter drop-shadow-md transition-transform hover:scale-125 cursor-pointer">
+                  {player.on_fire && <span className="text-xs">🔥</span>}
+                  <span
+                    className="text-2xl filter drop-shadow-md transition-transform hover:scale-125 cursor-pointer inline-block"
+                    style={{ transform: 'scaleX(-1)' }}
+                  >
                     {player.car_emoji || '🏎️'}
                   </span>
-                  {player.on_fire && <span className="text-xs">🔥</span>}
                 </div>
 
                 {/* Score at Right End */}

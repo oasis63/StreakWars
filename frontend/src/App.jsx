@@ -166,7 +166,7 @@ export default function App() {
                   : 'bg-[#1e293b]/70 text-slate-300 border border-slate-800 hover:text-white'
               }`}
             >
-              🏎️ Track to Victory
+              <span className="inline-block" style={{ transform: 'scaleX(-1)' }}>🏎️</span> Track to Victory
             </button>
           </div>
 
