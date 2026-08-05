@@ -90,3 +90,20 @@ CREATE TABLE IF NOT EXISTS scoring_config_history (
     snapshot TEXT NOT NULL,
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Discussion Forum Posts & Replies
+CREATE TABLE IF NOT EXISTS forum_posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) DEFAULT '',
+    category VARCHAR(100) DEFAULT 'General',
+    author_name VARCHAR(255) NOT NULL,
+    author_avatar VARCHAR(50) NOT NULL DEFAULT '🐱‍💻',
+    author_color VARCHAR(50) NOT NULL DEFAULT '#6366f1',
+    author_handle VARCHAR(100) NOT NULL,
+    author_title VARCHAR(100) NOT NULL DEFAULT 'Algo Explorer',
+    content TEXT NOT NULL,
+    parent_id INTEGER REFERENCES forum_posts(id) ON DELETE CASCADE,
+    likes INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

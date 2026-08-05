@@ -93,7 +93,10 @@ async function initDb() {
             "ALTER TABLE user_stats ADD COLUMN resubmit_pts REAL DEFAULT 0",
             "ALTER TABLE users ADD COLUMN is_deleted INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN emoji TEXT DEFAULT '👤'",
-            "ALTER TABLE users ADD COLUMN car_emoji TEXT DEFAULT '🏎️'"
+            "ALTER TABLE users ADD COLUMN car_emoji TEXT DEFAULT '🏎️'",
+            "ALTER TABLE forum_posts ADD COLUMN title TEXT DEFAULT ''",
+            "ALTER TABLE forum_posts ADD COLUMN category TEXT DEFAULT 'General'",
+            "ALTER TABLE forum_posts ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))"
         ];
         for (const sql of alterations) {
             try { sqliteDb.exec(sql); } catch {}
