@@ -16,6 +16,7 @@ const usersRouter = require('./routes/users');
 const profileRouter = require('./routes/profile');
 const settingsRouter = require('./routes/settings');
 const forumRouter = require('./routes/forum');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/forum', forumRouter);
+app.use('/api/auth', authRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

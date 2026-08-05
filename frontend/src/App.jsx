@@ -10,6 +10,7 @@ import RaceWormChart from './components/RaceWormChart';
 import UserProfile from './components/UserProfile';
 import SettingsPanel from './components/SettingsPanel';
 import DiscussionForum from './components/DiscussionForum';
+import AuthModal from './components/AuthModal';
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -19,6 +20,17 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('streakwars_theme') || 'green');
+
+  // User Auth Session State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('streakwars_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const prevLeaderIdRef = useRef(null);
 
@@ -137,7 +149,37 @@ export default function App() {
           </div>
 
           {/* Top Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* User Session Badge / Login Button */}
+            {currentUser ? (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Log out from @${currentUser.username}?`)) {
+                    localStorage.removeItem('streakwars_user');
+                    setCurrentUser(null);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 font-code text-xs flex items-center gap-2 transition-all shadow-inner"
+                title="Click to log out"
+              >
+                <div 
+                  className="w-5 h-5 rounded-md flex items-center justify-center text-xs text-white font-bold"
+                  style={{ backgroundColor: currentUser.avatar_color || '#6366f1' }}
+                >
+                  {currentUser.avatar_emoji || '👤'}
+                </div>
+                <span className="font-bold text-white">{currentUser.display_name}</span>
+                <span className="text-slate-400 font-normal">{currentUser.username}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+              >
+                <span>🔑 Log In / Register</span>
+              </button>
+            )}
+
             <button
               onClick={() => setActiveTab('forum')}
               className={`px-3.5 py-2 rounded-xl text-xs font-code font-bold transition-all flex items-center gap-1.5 ${
@@ -241,9 +283,19 @@ export default function App() {
         )}
 
         {activeTab === 'forum' && (
-          <DiscussionForum />
+          <DiscussionForum 
+            currentUser={currentUser}
+            onOpenAuth={() => setAuthModalOpen(true)}
+          />
         )}
       </main>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={(user) => setCurrentUser(user)}
+      />
 
       {/* Settings Drawer */}
       <SettingsPanel

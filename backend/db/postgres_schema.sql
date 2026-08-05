@@ -1,8 +1,13 @@
--- Active participants
+-- Active participants & registered global users
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     leetcode_username VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(100) UNIQUE,
+    display_name VARCHAR(255),
+    pin_code VARCHAR(10) DEFAULT '1234',
+    avatar_emoji VARCHAR(50) DEFAULT '👤',
+    avatar_color VARCHAR(50) DEFAULT '#6366f1',
     color VARCHAR(50) NOT NULL DEFAULT '#6366f1',
     emoji VARCHAR(50) DEFAULT '👤',
     car_emoji VARCHAR(50) DEFAULT '🏎️',
@@ -94,6 +99,7 @@ CREATE TABLE IF NOT EXISTS scoring_config_history (
 -- Discussion Forum Posts & Replies
 CREATE TABLE IF NOT EXISTS forum_posts (
     id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     title VARCHAR(255) DEFAULT '',
     category VARCHAR(100) DEFAULT 'General',
     author_name VARCHAR(255) NOT NULL,

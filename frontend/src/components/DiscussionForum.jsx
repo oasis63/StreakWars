@@ -16,12 +16,15 @@ const CATEGORIES = [
   { id: 'debugging', name: '🐛 Debugging & Code', icon: '🐛' }
 ];
 
-export default function DiscussionForum() {
+export default function DiscussionForum({ currentUser, onOpenAuth }) {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Active Random Persona for current poster
+  // Active Poster Mode: 'account' (real DP & username) vs 'anonymous' (random persona)
+  const [postMode, setPostMode] = useState(currentUser ? 'account' : 'anonymous');
+
+  // Active Random Persona
   const [persona, setPersona] = useState(null);
   const [loadingPersona, setLoadingPersona] = useState(false);
 
@@ -98,6 +101,17 @@ export default function DiscussionForum() {
     fetchTopics();
   }, []);
 
+  const activePoster = (postMode === 'account' && currentUser)
+    ? {
+        user_id: currentUser.id,
+        name: currentUser.display_name,
+        handle: currentUser.username,
+        avatar: currentUser.avatar_emoji || '👤',
+        color: currentUser.avatar_color || '#6366f1',
+        title: 'Participant'
+      }
+    : persona;
+
   // Handle creating a new discussion topic
   const handleCreateTopic = async () => {
     if (!newTopicTitle.trim()) {
@@ -118,7 +132,7 @@ export default function DiscussionForum() {
           title: newTopicTitle,
           category: newTopicCategory,
           content: newTopicContent,
-          author: persona
+          author: activePoster
         })
       });
 
@@ -152,7 +166,7 @@ export default function DiscussionForum() {
         body: JSON.stringify({
           content: commentContent,
           parent_id: parentId,
-          author: persona
+          author: activePoster
         })
       });
 
@@ -322,48 +336,92 @@ export default function DiscussionForum() {
         </div>
       </div>
 
-      {/* Active Random Persona Box */}
+      {/* Active Poster Identity Box */}
       <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-inner">
         <div className="flex items-center gap-3">
           <div 
             className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-lg shrink-0 border border-white/10"
-            style={{ backgroundColor: persona?.color || '#6366f1' }}
+            style={{ backgroundColor: activePoster?.color || '#6366f1' }}
           >
-            {persona?.avatar || '🐱‍💻'}
+            {activePoster?.avatar || '🐱‍💻'}
           </div>
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono-title font-bold text-sm text-white">
-                {persona?.name || 'Generating persona...'}
+                {activePoster?.name || 'Loading profile...'}
               </span>
               <span className="text-xs font-code text-slate-400">
-                {persona?.handle}
+                {activePoster?.handle}
               </span>
-              {persona?.title && (
+              {activePoster?.title && (
                 <span 
                   className="px-2 py-0.5 rounded text-[10px] font-code font-bold"
-                  style={{ backgroundColor: `${persona.color}25`, color: persona.color, border: `1px solid ${persona.color}40` }}
+                  style={{ backgroundColor: `${activePoster.color}25`, color: activePoster.color, border: `1px solid ${activePoster.color}40` }}
                 >
-                  {persona.title}
+                  {activePoster.title}
                 </span>
               )}
             </div>
             <div className="text-[11px] font-code text-slate-400 flex items-center gap-1 mt-0.5">
               <Sparkles className="w-3 h-3 text-amber-400 inline" />
-              <span>Random developer profile assigned automatically for your next post</span>
+              <span>
+                {postMode === 'account' 
+                  ? 'Posting as your verified account with your profile avatar DP'
+                  : 'Posting as an anonymous developer persona'}
+              </span>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={fetchRandomPersona}
-          disabled={loadingPersona}
-          className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-50"
-        >
-          <Dices className={`w-3.5 h-3.5 ${loadingPersona ? 'animate-spin' : ''}`} />
-          Reroll Persona
-        </button>
+        {/* Identity Selector Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {currentUser ? (
+            <div className="flex bg-slate-900 rounded-xl p-1 border border-slate-800 font-code text-xs">
+              <button
+                type="button"
+                onClick={() => setPostMode('account')}
+                className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                  postMode === 'account'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>👤 Real Profile</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPostMode('anonymous')}
+                className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                  postMode === 'anonymous'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🎲 Anonymously</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
+            >
+              <span>🔑 Log In to Post as Yourself</span>
+            </button>
+          )}
+
+          {postMode === 'anonymous' && (
+            <button
+              onClick={fetchRandomPersona}
+              disabled={loadingPersona}
+              className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-50"
+            >
+              <Dices className={`w-3.5 h-3.5 ${loadingPersona ? 'animate-spin' : ''}`} />
+              Reroll Persona
+            </button>
+          )}
+        </div>
       </div>
 
       {/* MODE 1: CREATE NEW TOPIC FORM */}

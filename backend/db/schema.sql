@@ -1,10 +1,16 @@
--- Active participants
+-- Active participants & registered global users
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     leetcode_username TEXT NOT NULL UNIQUE,
+    username TEXT UNIQUE,
+    display_name TEXT,
+    pin_code TEXT DEFAULT '1234',
+    avatar_emoji TEXT DEFAULT '👤',
+    avatar_color TEXT DEFAULT '#6366f1',
     color TEXT NOT NULL DEFAULT '#6366f1',
     emoji TEXT DEFAULT '👤',
+    car_emoji TEXT DEFAULT '🏎️',
     is_deleted INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -91,6 +97,7 @@ CREATE TABLE IF NOT EXISTS scoring_config_history (
 -- Discussion Forum Posts & Replies
 CREATE TABLE IF NOT EXISTS forum_posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     title TEXT DEFAULT '',
     category TEXT DEFAULT 'General',
     author_name TEXT NOT NULL,
