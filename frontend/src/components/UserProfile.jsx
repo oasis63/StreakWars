@@ -250,9 +250,9 @@ export default function UserProfile({ userId, onClose }) {
               Snapshot History ({data.snapshots.length} syncs)
             </h2>
 
-            <div className="overflow-x-auto">
+            <div className="max-h-64 overflow-y-auto overflow-x-auto pr-1">
               <table className="w-full text-left font-code text-xs">
-                <thead>
+                <thead className="sticky top-0 bg-slate-900 shadow-md z-10">
                   <tr className="border-b border-slate-800 text-slate-400">
                     <th className="py-2.5 px-3">Synced At</th>
                     <th className="py-2.5 px-3 text-right">Total Easy</th>
@@ -264,7 +264,15 @@ export default function UserProfile({ userId, onClose }) {
                   {data.snapshots.map((s, idx) => (
                     <tr key={idx} className="hover:bg-slate-800/30">
                       <td className="py-2.5 px-3 text-slate-300">
-                        {new Date(s.date_fetched).toLocaleString()}
+                        {new Date(s.date_fetched).toLocaleString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </td>
                       <td className="py-2.5 px-3 text-right font-bold text-emerald-400">{s.total_easy}</td>
                       <td className="py-2.5 px-3 text-right font-bold text-amber-400">{s.total_medium}</td>

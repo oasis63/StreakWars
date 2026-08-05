@@ -50,6 +50,41 @@
   opacity: 0.4;
 }
 
+/* Laser Scanning Line Animation during Sync */
+@keyframes laserScan {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.sync-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #10b981 20%, #34d399 50%, #10b981 80%, transparent);
+  box-shadow: 0 0 15px #10b981, 0 0 30px #34d399, 0 0 45px #059669;
+  animation: laserScan 2.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.theme-duotone .sync-scan-line {
+  background: linear-gradient(90deg, transparent, #f43f5e 20%, #38bdf8 50%, #f43f5e 80%, transparent);
+  box-shadow: 0 0 15px #f43f5e, 0 0 30px #38bdf8, 0 0 45px #e11d48;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
