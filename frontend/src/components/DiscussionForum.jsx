@@ -546,21 +546,6 @@ export default function DiscussionForum() {
               Comments & Discussion ({activeThread.replies ? activeThread.replies.length : 0})
             </h3>
 
-            {/* Comment Composer */}
-            <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2">
-              <label className="text-xs font-code font-bold text-slate-300">
-                Join the Discussion
-              </label>
-              <RichTextEditor
-                value={commentContent}
-                onChange={setCommentContent}
-                placeholder="Write a comment or code response..."
-                onSubmit={() => handlePostComment(activeThread.id)}
-                submitLabel="Post Comment"
-                isSubmitting={submittingComment}
-              />
-            </div>
-
             {/* Comments List */}
             {activeThread.replies && activeThread.replies.length > 0 ? (
               <div className="space-y-3">
@@ -640,10 +625,26 @@ export default function DiscussionForum() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 font-code text-xs text-slate-500">
-                No comments yet. Be the first to leave a comment above!
+              <div className="text-center py-6 font-code text-xs text-slate-500 bg-slate-900/40 rounded-xl border border-slate-800/60">
+                No comments yet. Be the first to leave a comment below!
               </div>
             )}
+
+            {/* Comment Composer at Bottom of All Comments */}
+            <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2 mt-6">
+              <label className="text-xs font-code font-bold text-slate-300 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                Join the Discussion
+              </label>
+              <RichTextEditor
+                value={commentContent}
+                onChange={setCommentContent}
+                placeholder="Write a comment or code response..."
+                onSubmit={() => handlePostComment(activeThread.id)}
+                submitLabel="Post Comment"
+                isSubmitting={submittingComment}
+              />
+            </div>
           </div>
         </div>
       )}
