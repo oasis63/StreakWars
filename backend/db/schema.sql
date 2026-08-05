@@ -87,3 +87,20 @@ CREATE TABLE IF NOT EXISTS scoring_config_history (
     snapshot TEXT NOT NULL,            -- JSON of all app_settings at time of change
     saved_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Discussion Forum Posts & Replies
+CREATE TABLE IF NOT EXISTS forum_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT DEFAULT '',
+    category TEXT DEFAULT 'General',
+    author_name TEXT NOT NULL,
+    author_avatar TEXT NOT NULL DEFAULT '🐱‍💻',
+    author_color TEXT NOT NULL DEFAULT '#6366f1',
+    author_handle TEXT NOT NULL,
+    author_title TEXT NOT NULL DEFAULT 'Algo Explorer',
+    content TEXT NOT NULL,
+    parent_id INTEGER REFERENCES forum_posts(id) ON DELETE CASCADE,
+    likes INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

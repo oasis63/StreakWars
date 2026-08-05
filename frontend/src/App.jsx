@@ -9,6 +9,7 @@ import RaceTrack from './components/RaceTrack';
 import RaceWormChart from './components/RaceWormChart';
 import UserProfile from './components/UserProfile';
 import SettingsPanel from './components/SettingsPanel';
+import DiscussionForum from './components/DiscussionForum';
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -135,19 +136,34 @@ export default function App() {
             </p>
           </div>
 
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-2 rounded-xl bg-[#1e293b]/70 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
-            title="Settings"
-          >
-            <SettingsIcon className="w-5 h-5" />
-          </button>
+          {/* Top Right Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('forum')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-code font-bold transition-all flex items-center gap-1.5 ${
+                activeTab === 'forum'
+                  ? 'bg-[#93c5fd] text-slate-950 shadow-md'
+                  : 'bg-[#1e293b]/70 text-slate-300 border border-slate-800 hover:text-white hover:border-slate-700'
+              }`}
+              title="Discussion Forum"
+            >
+              💬 Discussion Forum
+            </button>
+
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 rounded-xl bg-[#1e293b]/70 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
+              title="Settings"
+            >
+              <SettingsIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Controls & Nav Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
           {/* Tab buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setActiveTab('leaderboard')}
               className={`px-4 py-2 rounded-xl text-xs font-code font-bold transition-all ${
@@ -207,17 +223,26 @@ export default function App() {
       <main className="space-y-6 relative overflow-hidden rounded-2xl p-0.5">
         {syncing && <div className="sync-scan-line" />}
 
-        {activeTab === 'leaderboard' ? (
-          <Leaderboard
-            leaderboard={data.leaderboard}
-            onSelectUser={(userId) => setSelectedUserId(userId)}
-          />
-        ) : (
-          <RaceTrack leaderboard={data.leaderboard} />
+        {activeTab === 'leaderboard' && (
+          <>
+            <Leaderboard
+              leaderboard={data.leaderboard}
+              onSelectUser={(userId) => setSelectedUserId(userId)}
+            />
+            <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
+          </>
         )}
 
-        {/* Score Progression Chart */}
-        <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
+        {activeTab === 'track' && (
+          <>
+            <RaceTrack leaderboard={data.leaderboard} />
+            <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
+          </>
+        )}
+
+        {activeTab === 'forum' && (
+          <DiscussionForum />
+        )}
       </main>
 
       {/* Settings Drawer */}

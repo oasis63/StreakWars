@@ -15,6 +15,7 @@ const syncRouter = require('./routes/sync');
 const usersRouter = require('./routes/users');
 const profileRouter = require('./routes/profile');
 const settingsRouter = require('./routes/settings');
+const forumRouter = require('./routes/forum');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,7 @@ app.use('/api/sync', syncRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/forum', forumRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
