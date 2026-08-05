@@ -39,11 +39,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: `Username @${cleanUsername} is already taken. Please choose another.` });
     }
 
-    // Insert new user
+    // Insert new user account (is_participant = 0 so user is not automatically added to the LeetCode challenge leaderboard/track)
     const insertStmt = prepare(`
       INSERT INTO users (
-        name, leetcode_username, username, display_name, pin_code, avatar_emoji, avatar_color, color, emoji
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        name, leetcode_username, username, display_name, pin_code, avatar_emoji, avatar_color, color, emoji, is_participant
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     `);
 
     const result = await insertStmt.run(

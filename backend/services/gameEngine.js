@@ -166,7 +166,7 @@ async function recomputeAllStats() {
     const startDateStr = cfg.challenge_start_date || new Date().toISOString().split('T')[0];
     const currentDay = await getCurrentChallengeDay();
 
-    const users = await db.prepare(`SELECT * FROM users WHERE is_deleted = 0`).all();
+    const users = await db.prepare(`SELECT * FROM users WHERE is_deleted = 0 AND COALESCE(is_participant, 1) = 1`).all();
     if (!users || users.length === 0) return;
 
     try {
@@ -348,7 +348,7 @@ async function recomputeAllStats() {
  */
 async function syncAllUsers() {
     const db = getDb();
-    const users = await db.prepare(`SELECT id FROM users WHERE is_deleted = 0`).all();
+    const users = await db.prepare(`SELECT id FROM users WHERE is_deleted = 0 AND COALESCE(is_participant, 1) = 1`).all();
     
     for (const u of users) {
         try {
