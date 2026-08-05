@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
         const users = await db.prepare(`
             SELECT id, name, leetcode_username, color, emoji, car_emoji, created_at
             FROM users
-            WHERE is_deleted = 0
+            WHERE is_deleted = 0 AND COALESCE(is_participant, 1) = 1
             ORDER BY id ASC
         `).all();
 

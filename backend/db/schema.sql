@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     color TEXT NOT NULL DEFAULT '#6366f1',
     emoji TEXT DEFAULT '👤',
     car_emoji TEXT DEFAULT '🏎️',
+    is_participant INTEGER DEFAULT 1,
     is_deleted INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

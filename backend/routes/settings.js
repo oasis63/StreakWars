@@ -29,8 +29,8 @@ router.post('/users', async (req, res) => {
 
         let userId = null;
         if (existing) {
-            if (existing.is_deleted) {
-                await db.prepare(`UPDATE users SET is_deleted = 0, name = ?, color = ?, emoji = ?, car_emoji = ? WHERE id = ?`)
+            if (existing.is_deleted || !existing.is_participant) {
+                await db.prepare(`UPDATE users SET is_deleted = 0, is_participant = 1, name = ?, color = ?, emoji = ?, car_emoji = ? WHERE id = ?`)
                   .run(cleanName, userColor, userEmoji, userCar, existing.id);
                 userId = existing.id;
             } else {
@@ -38,8 +38,8 @@ router.post('/users', async (req, res) => {
             }
         } else {
             const result = await db.prepare(`
-                INSERT INTO users (name, leetcode_username, color, emoji, car_emoji)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO users (name, leetcode_username, color, emoji, car_emoji, is_participant)
+                VALUES (?, ?, ?, ?, ?, 1)
                 RETURNING id
             `).run(cleanName, cleanUsername, userColor, userEmoji, userCar);
             userId = result.lastInsertRowid;

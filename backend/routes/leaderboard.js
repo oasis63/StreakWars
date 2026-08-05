@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
                 s.on_fire, s.multiplier_active, s.reactive_icon, s.badges, s.last_synced
             FROM users u
             LEFT JOIN user_stats s ON u.id = s.user_id
-            WHERE u.is_deleted = 0
+            WHERE u.is_deleted = 0 AND COALESCE(u.is_participant, 1) = 1
             ORDER BY COALESCE(s.score_final, 0) DESC, s.easy_solved DESC
         `).all();
 
