@@ -108,6 +108,14 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
                               spoon 🥄
                             </span>
                           )}
+                          {user.sync_status === "needs_review" && (
+                            <span
+                              className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider font-code"
+                              title={user.sync_warning}
+                            >
+                              score review ⚠️
+                            </span>
+                          )}
                         </div>
 
                         {/* Badges row */}

@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS snapshots (
     total_hard INTEGER NOT NULL DEFAULT 0
 );
 
+-- Immutable aggregate totals captured before the active challenge begins.
+CREATE TABLE IF NOT EXISTS challenge_baselines (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    challenge_start_date VARCHAR(10) NOT NULL,
+    captured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_easy INTEGER NOT NULL DEFAULT 0,
+    total_medium INTEGER NOT NULL DEFAULT 0,
+    total_hard INTEGER NOT NULL DEFAULT 0
+);
+
 -- Computed scores & game state -- rebuilt on every sync by gameEngine
 CREATE TABLE IF NOT EXISTS user_stats (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -51,7 +61,9 @@ CREATE TABLE IF NOT EXISTS user_stats (
     fresh_solves INTEGER DEFAULT 0,
     resubmit_count INTEGER DEFAULT 0,
     fresh_pts DOUBLE PRECISION DEFAULT 0,
-    resubmit_pts DOUBLE PRECISION DEFAULT 0
+    resubmit_pts DOUBLE PRECISION DEFAULT 0,
+    sync_status VARCHAR(50) DEFAULT 'verified',
+    sync_warning TEXT DEFAULT ''
 );
 
 -- Per-submission credit log (one row per unique problem slug per user)

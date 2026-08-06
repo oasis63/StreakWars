@@ -36,7 +36,8 @@ router.get('/', async (req, res) => {
                 s.easy_solved, s.medium_solved, s.hard_solved, s.fresh_solves, s.resubmit_count,
                 s.fresh_pts, s.resubmit_pts,
                 s.score_raw, s.score_final, s.streak_bonus, s.current_streak, s.longest_streak,
-                s.on_fire, s.multiplier_active, s.reactive_icon, s.badges, s.last_synced
+                s.on_fire, s.multiplier_active, s.reactive_icon, s.badges, s.last_synced,
+                s.sync_status, s.sync_warning
             FROM users u
             LEFT JOIN user_stats s ON u.id = s.user_id
             WHERE u.is_deleted = 0 AND COALESCE(u.is_participant, 1) = 1
@@ -89,6 +90,8 @@ router.get('/', async (req, res) => {
                 badges: badges,
                 last_synced: u.last_synced,
                 last_synced_formatted: lastSyncedFormatted,
+                sync_status: u.sync_status || 'verified',
+                sync_warning: u.sync_warning || '',
                 rank: index + 1,
                 is_last_place: isLast
             };

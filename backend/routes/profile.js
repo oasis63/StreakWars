@@ -20,7 +20,7 @@ router.get('/:userId', async (req, res) => {
                 score_raw, score_final, streak_bonus, current_streak,
                 longest_streak, on_fire, multiplier_active, reactive_icon,
                 badges, last_synced, fresh_solves, resubmit_count,
-                fresh_pts, resubmit_pts
+                fresh_pts, resubmit_pts, sync_status, sync_warning
             FROM user_stats WHERE user_id = ?
         `).get(userId);
 
@@ -63,7 +63,9 @@ router.get('/:userId', async (req, res) => {
                 multiplier_active: Boolean(stats.multiplier_active),
                 reactive_icon: stats.reactive_icon || '👤',
                 badges: badges,
-                last_synced: stats.last_synced
+                last_synced: stats.last_synced,
+                sync_status: stats.sync_status || 'verified',
+                sync_warning: stats.sync_warning || ''
             } : {},
             credited_problems: creditedProblems.map(p => ({
                 ...p,

@@ -61,6 +61,8 @@ async function initDb() {
         `);
 
         await pgPool.query(`ALTER TABLE user_stats ALTER COLUMN last_synced TYPE TIMESTAMPTZ USING last_synced::TIMESTAMPTZ`).catch(() => {});
+        await pgPool.query(`ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS sync_status VARCHAR(50) DEFAULT 'verified'`);
+        await pgPool.query(`ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS sync_warning TEXT DEFAULT ''`);
 
         const pgAlterations = [
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(100)",
@@ -110,6 +112,8 @@ async function initDb() {
             "ALTER TABLE user_stats ADD COLUMN resubmit_count INTEGER DEFAULT 0",
             "ALTER TABLE user_stats ADD COLUMN fresh_pts REAL DEFAULT 0",
             "ALTER TABLE user_stats ADD COLUMN resubmit_pts REAL DEFAULT 0",
+            "ALTER TABLE user_stats ADD COLUMN sync_status TEXT DEFAULT 'verified'",
+            "ALTER TABLE user_stats ADD COLUMN sync_warning TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN is_deleted INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN emoji TEXT DEFAULT '👤'",
             "ALTER TABLE users ADD COLUMN car_emoji TEXT DEFAULT '🏎️'",

@@ -2,8 +2,16 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db/db');
-const { validateUsername } = require('../services/leetcodeApi');
-const { syncAllUsers } = require('../services/gameEngine');
+const { validateUsername, getUserStats } = require('../services/leetcodeApi');
+const { syncAllUsers, getChallengeStartMs } = require('../services/gameEngine');
+
+function getIstDateString(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(date);
+    const value = Object.fromEntries(parts.filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+    return `${value.year}-${value.month}-${value.day}`;
+}
 
 // GET /api/config
 router.get('/', async (req, res) => {
@@ -58,10 +66,23 @@ router.post('/setup', async (req, res) => {
         }
 
         const durationDays = parseInt(challenge_duration_days, 10);
-        const startDateStr = challenge_start_date || new Date().toISOString().split('T')[0];
+        const startDateStr = challenge_start_date || getIstDateString();
+
+        if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 365) {
+            return res.status(400).json({ error: 'Challenge duration must be between 1 and 365 days.' });
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateStr) || Number.isNaN(getChallengeStartMs(startDateStr))) {
+            return res.status(400).json({ error: 'Challenge start date must be a valid YYYY-MM-DD date.' });
+        }
+        if (startDateStr <= getIstDateString()) {
+            return res.status(400).json({
+                error: 'For fair public-data scoring, choose a challenge start date after today so participant baselines can be captured first.'
+            });
+        }
 
         const startDateObj = new Date(startDateStr);
-        const endDateObj = new Date(startDateObj.getTime() + durationDays * 24 * 60 * 60 * 1000);
+        // A duration of one starts and ends on the same calendar day.
+        const endDateObj = new Date(startDateObj.getTime() + (durationDays - 1) * 24 * 60 * 60 * 1000);
         const endDateStr = endDateObj.toISOString().split('T')[0];
 
         const db = getDb();
@@ -98,6 +119,30 @@ router.post('/setup', async (req, res) => {
             const emoji = u.emoji || '👤';
             const carEmoji = u.car_emoji || CAR_EMOJIS[i % CAR_EMOJIS.length];
             await db.prepare(stmtUser).run(u.name.trim(), u.leetcode_username.trim(), color, emoji, carEmoji);
+
+            const participant = await db.prepare(`SELECT id FROM users WHERE leetcode_username = ?`).get(u.leetcode_username.trim());
+            const baseline = await getUserStats(u.leetcode_username.trim());
+            const capturedAt = new Date().toISOString();
+            await db.prepare(`
+                INSERT INTO challenge_baselines (
+                    user_id, challenge_start_date, captured_at, total_easy, total_medium, total_hard
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    challenge_start_date = EXCLUDED.challenge_start_date,
+                    captured_at = EXCLUDED.captured_at,
+                    total_easy = EXCLUDED.total_easy,
+                    total_medium = EXCLUDED.total_medium,
+                    total_hard = EXCLUDED.total_hard
+            `).run(participant.id, startDateStr, capturedAt, baseline.easy, baseline.medium, baseline.hard);
+            await db.prepare(`
+                INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(participant.id, capturedAt, baseline.easy, baseline.medium, baseline.hard);
+            await db.prepare(`
+                INSERT INTO user_stats (user_id, sync_status, sync_warning)
+                VALUES (?, 'verified', '')
+                ON CONFLICT(user_id) DO UPDATE SET sync_status = 'verified', sync_warning = ''
+            `).run(participant.id);
         }
 
         // Trigger background sync

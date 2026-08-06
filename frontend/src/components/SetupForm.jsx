@@ -8,7 +8,11 @@ const PRESET_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#
 export default function SetupForm({ onSetupComplete }) {
   const [title, setTitle] = useState('4Coders1Bill');
   const [duration, setDuration] = useState(30);
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
   const [stakes, setStakes] = useState('lowest score buys the party');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -93,7 +97,7 @@ export default function SetupForm({ onSetupComplete }) {
             4Coders1Bill
           </h1>
           <p className="text-slate-400 text-sm mt-2 font-code">
-            Create your custom LeetCode challenge & add participants to start!
+            Choose a future start date so each participant’s baseline can be captured fairly.
           </p>
         </div>
 

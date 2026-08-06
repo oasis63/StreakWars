@@ -1,6 +1,6 @@
 # ⚔️ StreakWars - LeetCode Challenge Tracker
 
-StreakWars is a customizable LeetCode challenge tracker designed for friends and teams. Track scores, visualize progress with live charts & race views, and enforce gamified rules.
+StreakWars is a customizable LeetCode challenge tracker designed for friends and teams. Track scores, visualize progress with live charts & race views, enforce gamified rules, and participate in discussion threads.
 
 ---
 
@@ -8,40 +8,56 @@ StreakWars is a customizable LeetCode challenge tracker designed for friends and
 
 StreakWars uses a production-ready **PostgreSQL 16** database architecture with Docker Compose orchestration.
 
-### Services:
-1. **`postgres`**: PostgreSQL 16 database server with persistent volume storage (`postgres-data`).
-2. **`backend`**: Node.js Express REST API connected to PostgreSQL.
-3. **`frontend`**: Production Nginx container serving React SPA & reverse-proxying `/api/` requests.
+### Services Included in Docker Setup:
+1. **`postgres`**: PostgreSQL 16 database server (`streakwars_db` on port `5432`).
+2. **`adminer`**: Web-based database management GUI on [http://localhost:8080](http://localhost:8080).
+3. **`backend`**: Node.js Express REST API connected to local PostgreSQL.
+4. **`frontend`**: React SPA (Vite / Nginx) on [http://localhost:5173](http://localhost:5173).
 
 ---
 
-## 🚀 Quick Start with Docker & Docker Compose
+## 🚀 Quick Start Options
 
-### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+### Option 1: Live Development Mode (Hot-Reloading & Live Code Mounting)
 
-### Running the Application
+Use `docker-compose.dev.yml` for local development. Edits in `./backend` or `./frontend` automatically trigger live reloads and Vite HMR!
 
-1. **Clone & Navigate to Project Directory**:
-   ```bash
-   cd StreakWars
-   ```
+```bash
+# Start all local dev services with live hot-reloading
+docker compose -f docker-compose.dev.yml up --build
+```
 
-2. **Build & Start Containers**:
-   ```bash
-   docker-compose up --build -d
-   ```
+- **Frontend App**: [http://localhost:5173](http://localhost:5173) (Vite HMR)
+- **Backend API**: [http://localhost:3001](http://localhost:3001) (`node --watch` live reload)
+- **Database GUI (Adminer)**: [http://localhost:8080](http://localhost:8080)
+- **PostgreSQL Database**: `localhost:5432` (`User: streakwars`, `Pass: streakwars_password`, `DB: streakwars_db`)
 
-3. **Access the Web App**:
-   - **Frontend UI**: Open [http://localhost:5173](http://localhost:5173) in your browser.
-   - **Backend API**: Running on [http://localhost:3001](http://localhost:3001).
-   - **PostgreSQL DB**: Port `5432` (`streakwars` / `streakwars_password`).
+---
 
-4. **Stopping Services**:
-   ```bash
-   docker-compose down
-   ```
+### Option 2: Production Container Stack
+
+Run the full production-like containerized stack with Nginx and Express:
+
+```bash
+# Build & start full container stack in background
+docker compose up --build -d
+```
+
+- **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:3001](http://localhost:3001)
+- **Database GUI (Adminer)**: [http://localhost:8080](http://localhost:8080)
+
+---
+
+### 🛑 Stopping Services
+
+```bash
+# Stop dev environment
+docker compose -f docker-compose.dev.yml down
+
+# Stop production stack
+docker compose down
+```
 
 ---
 
