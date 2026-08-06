@@ -1,10 +1,10 @@
 import React from "react";
 
-export default function Leaderboard({ leaderboard, onSelectUser }) {
+export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }) {
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="hud-card p-8 text-center font-code text-slate-400">
-        No participants registered in this challenge yet.
+      <div className="hud-card p-8 border border-slate-800 text-center font-code text-slate-400">
+        No participants found. Add players in Settings to start!
       </div>
     );
   }
@@ -208,7 +208,7 @@ export default function Leaderboard({ leaderboard, onSelectUser }) {
           <span>streak bonus every 3 days</span>
         </div>
         <div>
-          <span>30 days remaining</span>
+          <span>{daysRemaining !== undefined ? `${daysRemaining} days remaining` : 'Challenge Active'}</span>
         </div>
       </div>
     </div>
