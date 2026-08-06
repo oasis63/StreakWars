@@ -2,6 +2,12 @@
 const { getDb } = require('../db/db');
 const config = require('../config');
 const leetcodeApi = require('./leetcodeApi');
+const {
+    PUBLIC_RECENT_SUBMISSIONS_LIMIT,
+    getSubmissionCredit,
+    consumeFreshCapacity,
+    getSubmissionWindowWarning
+} = require('./scoring');
 
 /**
  * Get global challenge configuration from database
@@ -64,23 +70,50 @@ async function syncUser(userId) {
     const stats = await leetcodeApi.getUserStats(user.leetcode_username);
     const nowIso = new Date().toISOString();
 
+    const baselineSnapshot = await db.prepare(`
+        SELECT captured_at, total_easy, total_medium, total_hard
+        FROM challenge_baselines
+        WHERE user_id = ? AND challenge_start_date = ?
+    `).get(userId, startDateStr);
+
+    // Never score a legacy participant against an unknown baseline. Capture a
+    // new one for subsequent syncs and surface the review requirement instead.
+    if (!baselineSnapshot) {
+        const warning = 'A pre-challenge baseline was unavailable. A new baseline was captured; scores before this sync require review.';
+        await db.prepare(`
+            INSERT INTO challenge_baselines (
+                user_id, challenge_start_date, captured_at, total_easy, total_medium, total_hard
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                challenge_start_date = EXCLUDED.challenge_start_date,
+                captured_at = EXCLUDED.captured_at,
+                total_easy = EXCLUDED.total_easy,
+                total_medium = EXCLUDED.total_medium,
+                total_hard = EXCLUDED.total_hard
+        `).run(userId, startDateStr, nowIso, stats.easy, stats.medium, stats.hard);
+        await db.prepare(`
+            INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
+            VALUES (?, ?, ?, ?, ?)
+        `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
+        await db.prepare(`
+            INSERT INTO user_stats (user_id, sync_status, sync_warning)
+            VALUES (?, 'needs_review', ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                sync_status = 'needs_review',
+                sync_warning = EXCLUDED.sync_warning
+        `).run(userId, warning);
+        return;
+    }
+
     // 2. Insert aggregate snapshot
     await db.prepare(`
         INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
         VALUES (?, ?, ?, ?, ?)
     `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
 
-    // Baseline snapshot
-    const baselineSnapshot = await db.prepare(`
-        SELECT total_easy, total_medium, total_hard
-        FROM snapshots
-        WHERE user_id = ?
-        ORDER BY id ASC LIMIT 1
-    `).get(userId);
-
-    const baseEasy = baselineSnapshot ? baselineSnapshot.total_easy : stats.easy;
-    const baseMed = baselineSnapshot ? baselineSnapshot.total_medium : stats.medium;
-    const baseHard = baselineSnapshot ? baselineSnapshot.total_hard : stats.hard;
+    const baseEasy = baselineSnapshot.total_easy;
+    const baseMed = baselineSnapshot.total_medium;
+    const baseHard = baselineSnapshot.total_hard;
 
     // Fresh capacity
     const freshCapacity = {
@@ -92,9 +125,9 @@ async function syncUser(userId) {
     const existingFreshCounts = await db.prepare(`
         SELECT difficulty, COUNT(*) as cnt
         FROM credited_problems
-        WHERE user_id = ? AND credit_type = 'fresh'
+        WHERE user_id = ? AND credit_type = 'fresh' AND credited_at >= ?
         GROUP BY difficulty
-    `).all(userId);
+    `).all(userId, baselineSnapshot.captured_at);
 
     for (const ef of existingFreshCounts) {
         const dk = (ef.difficulty || '').toLowerCase();
@@ -104,10 +137,24 @@ async function syncUser(userId) {
     }
 
     // 3. Fetch recent accepted submissions from LeetCode
-    const recentSubmissions = await leetcodeApi.getRecentSubmissions(user.leetcode_username, 25);
+    const recentSubmissions = await leetcodeApi.getRecentSubmissions(
+        user.leetcode_username,
+        PUBLIC_RECENT_SUBMISSIONS_LIMIT
+    );
     
     // Sort oldest to newest
     recentSubmissions.sort((a, b) => a.timestamp - b.timestamp);
+
+    const submissionWindowWarning = getSubmissionWindowWarning(recentSubmissions, startMs);
+    if (submissionWindowWarning) {
+        await db.prepare(`
+            INSERT INTO user_stats (user_id, sync_status, sync_warning)
+            VALUES (?, 'needs_review', ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                sync_status = 'needs_review',
+                sync_warning = EXCLUDED.sync_warning
+        `).run(userId, submissionWindowWarning);
+    }
 
     for (const sub of recentSubmissions) {
         const subMs = sub.timestamp * 1000;
@@ -139,18 +186,21 @@ async function syncUser(userId) {
 
         // Lookup problem difficulty
         const diffStr = await leetcodeApi.getProblemDifficulty(sub.titleSlug);
-        const diffKey = (diffStr || 'Easy').toLowerCase();
         const subDay = getDayNumber(subMs, startDateStr);
 
-        let creditType = 'fresh';
-        let pointsAwarded = config.POINTS[diffKey] || 1;
+        const { difficultyKey, creditType, pointsAwarded } = getSubmissionCredit(diffStr, freshCapacity);
 
         try {
-            await db.prepare(`
+            const result = await db.prepare(`
                 INSERT INTO credited_problems (user_id, title_slug, difficulty, credit_type, points_awarded, day_number, credited_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (user_id, title_slug) DO NOTHING
             `).run(userId, sub.titleSlug, diffStr, creditType, pointsAwarded, subDay, new Date(subMs).toISOString());
+
+            // Only consume capacity if this submission was actually credited.
+            if (creditType === 'fresh' && result.rowCount > 0) {
+                consumeFreshCapacity(freshCapacity, difficultyKey);
+            }
         } catch (e) {
             // UNIQUE guard
         }
@@ -364,6 +414,7 @@ async function syncAllUsers() {
 
 module.exports = {
     getChallengeConfig,
+    getChallengeStartMs,
     getCurrentChallengeDay,
     syncUser,
     syncAllUsers,

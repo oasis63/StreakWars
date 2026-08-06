@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db/db');
 const { validateUsername, getUserStats } = require('../services/leetcodeApi');
-const { syncUser, recomputeAllStats } = require('../services/gameEngine');
+const { syncUser, recomputeAllStats, getChallengeConfig, getChallengeStartMs } = require('../services/gameEngine');
 
 // POST /api/settings/users (Add user mid-challenge)
 router.post('/users', async (req, res) => {
@@ -22,6 +22,13 @@ router.post('/users', async (req, res) => {
         const isValid = await validateUsername(cleanUsername);
         if (!isValid) {
             return res.status(400).json({ error: `LeetCode username "${cleanUsername}" does not exist on LeetCode.` });
+        }
+
+        const cfg = await getChallengeConfig();
+        if (!cfg.challenge_start_date || Date.now() >= getChallengeStartMs(cfg.challenge_start_date)) {
+            return res.status(400).json({
+                error: 'Participants cannot be added once a challenge has started in fair public-data mode.'
+            });
         }
 
         const db = getDb();
@@ -48,9 +55,25 @@ router.post('/users', async (req, res) => {
         const initialStats = await getUserStats(cleanUsername);
         const nowIso = new Date().toISOString();
         await db.prepare(`
+            INSERT INTO challenge_baselines (
+                user_id, challenge_start_date, captured_at, total_easy, total_medium, total_hard
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                challenge_start_date = EXCLUDED.challenge_start_date,
+                captured_at = EXCLUDED.captured_at,
+                total_easy = EXCLUDED.total_easy,
+                total_medium = EXCLUDED.total_medium,
+                total_hard = EXCLUDED.total_hard
+        `).run(userId, cfg.challenge_start_date, nowIso, initialStats.easy, initialStats.medium, initialStats.hard);
+        await db.prepare(`
             INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
             VALUES (?, ?, ?, ?, ?)
         `).run(userId, nowIso, initialStats.easy, initialStats.medium, initialStats.hard);
+        await db.prepare(`
+            INSERT INTO user_stats (user_id, sync_status, sync_warning)
+            VALUES (?, 'verified', '')
+            ON CONFLICT(user_id) DO UPDATE SET sync_status = 'verified', sync_warning = ''
+        `).run(userId);
 
         await syncUser(userId);
         await recomputeAllStats();
