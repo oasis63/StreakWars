@@ -269,6 +269,7 @@ export default function App() {
           <>
             <Leaderboard
               leaderboard={data.leaderboard}
+              daysRemaining={data.days_remaining}
               onSelectUser={(userId) => setSelectedUserId(userId)}
             />
             <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
