@@ -79,6 +79,7 @@ async function initDb() {
         for (const sql of pgAlterations) {
             await pgPool.query(sql).catch(() => {});
         }
+        await pgPool.query(`UPDATE user_stats SET sync_status = 'ok', sync_warning = NULL WHERE sync_status = 'needs_review' AND (sync_warning LIKE '%baseline%' OR sync_warning IS NULL OR sync_warning = '')`).catch(() => {});
 
         console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
@@ -131,6 +132,9 @@ async function initDb() {
         for (const sql of alterations) {
             try { sqliteDb.exec(sql); } catch {}
         }
+        try {
+            sqliteDb.exec("UPDATE user_stats SET sync_status = 'ok', sync_warning = NULL WHERE sync_status = 'needs_review' AND (sync_warning LIKE '%baseline%' OR sync_warning IS NULL OR sync_warning = '');");
+        } catch (e) {}
 
         sqliteDb.prepare("INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)").run('party_stakes', 'lowest score buys the party');
 

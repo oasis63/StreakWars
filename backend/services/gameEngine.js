@@ -78,8 +78,8 @@ async function syncUser(userId) {
 
     // Never score a legacy participant against an unknown baseline. Capture a
     // new one for subsequent syncs and surface the review requirement instead.
+    // If no baseline snapshot exists yet for this challenge, capture a new baseline
     if (!baselineSnapshot) {
-        const warning = 'A pre-challenge baseline was unavailable. A new baseline was captured; scores before this sync require review.';
         await db.prepare(`
             INSERT INTO challenge_baselines (
                 user_id, challenge_start_date, captured_at, total_easy, total_medium, total_hard
@@ -91,18 +91,18 @@ async function syncUser(userId) {
                 total_medium = EXCLUDED.total_medium,
                 total_hard = EXCLUDED.total_hard
         `).run(userId, startDateStr, nowIso, stats.easy, stats.medium, stats.hard);
+
         await db.prepare(`
             INSERT INTO snapshots (user_id, date_fetched, total_easy, total_medium, total_hard)
             VALUES (?, ?, ?, ?, ?)
         `).run(userId, nowIso, stats.easy, stats.medium, stats.hard);
-        await db.prepare(`
-            INSERT INTO user_stats (user_id, sync_status, sync_warning)
-            VALUES (?, 'needs_review', ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                sync_status = 'needs_review',
-                sync_warning = EXCLUDED.sync_warning
-        `).run(userId, warning);
-        return;
+
+        baselineSnapshot = {
+            total_easy: stats.easy,
+            total_medium: stats.medium,
+            total_hard: stats.hard,
+            captured_at: nowIso
+        };
     }
 
     // 2. Insert aggregate snapshot
@@ -154,6 +154,14 @@ async function syncUser(userId) {
                 sync_status = 'needs_review',
                 sync_warning = EXCLUDED.sync_warning
         `).run(userId, submissionWindowWarning);
+    } else {
+        await db.prepare(`
+            INSERT INTO user_stats (user_id, sync_status, sync_warning)
+            VALUES (?, 'ok', NULL)
+            ON CONFLICT(user_id) DO UPDATE SET
+                sync_status = 'ok',
+                sync_warning = NULL
+        `).run(userId);
     }
 
     for (const sub of recentSubmissions) {
