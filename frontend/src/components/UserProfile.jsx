@@ -53,7 +53,7 @@ export default function UserProfile({ userId, onClose, colorMode = 'dark', onCol
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
                 <p className="sw-kicker mb-2">Driver</p>
-                <h1 className="text-4xl font-semibold tracking-tight flex items-center gap-3 flex-wrap">
+                <h1 className="text-4xl font-semibold tracking-tight flex items-center gap-3 flex-wrap uppercase">
                   <span>{data.stats.reactive_icon || data.user.emoji || '👤'}</span>
                   {data.user.name}
                   {data.stats.badges && data.stats.badges.length > 0 && (

@@ -1,15 +1,6 @@
 import React from 'react';
 import { fmtPts, scoreLine, scoreParts } from './ScoreBreakdowns';
 
-function displayName(name) {
-  if (!name) return '';
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
 function rankMark(rank) {
   if (rank === 1) return '🥇';
   if (rank === 2) return '🥈';
@@ -77,20 +68,10 @@ export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }
                   {rankMark(user.rank)}
                 </span>
 
-                <span
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[1.45rem] leading-none shrink-0 border"
-                  style={{
-                    backgroundColor: user.color ? `${user.color}33` : 'var(--volt-dim)',
-                    borderColor: user.color ? `${user.color}55` : 'var(--line)',
-                  }}
-                >
-                  {user.reactive_icon || user.emoji || '👤'}
-                </span>
-
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1.5 min-w-0">
-                    <span className="font-bold tracking-tight truncate group-hover:text-volt transition-colors">
-                      {displayName(user.name)}
+                    <span className="font-bold tracking-tight truncate uppercase group-hover:text-volt transition-colors">
+                      {user.name}
                     </span>
                     <span className="font-mono text-xs text-muted truncate">@{user.leetcode_username}</span>
                     {user.sync_status === 'needs_review' && (

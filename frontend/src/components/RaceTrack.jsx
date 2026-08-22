@@ -30,7 +30,7 @@ export default function RaceTrack({ leaderboard }) {
                   >
                     P{player.rank}
                   </span>
-                  <span className="font-semibold text-sm truncate text-cream">
+                  <span className="font-semibold text-sm truncate text-cream uppercase">
                     {player.name}
                   </span>
                   {player.on_fire && <span title="Active streak">🔥</span>}
