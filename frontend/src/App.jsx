@@ -43,7 +43,7 @@ export default function App() {
       if (d.leaderboard && d.leaderboard.length > 0) {
         const currentLeaderId = d.leaderboard[0].user_id;
         if (prevLeaderIdRef.current !== null && prevLeaderIdRef.current !== currentLeaderId) {
-          confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#d8ff3e', '#f3efe4', '#ff5c39'] });
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#c9b07a', '#4eb8a8', '#d26778', '#ece8df'] });
         }
         prevLeaderIdRef.current = currentLeaderId;
       }
@@ -187,7 +187,7 @@ export default function App() {
                 >
                   <span
                     className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
-                    style={{ backgroundColor: currentUser.avatar_color || '#d8ff3e', color: '#14120c' }}
+                    style={{ backgroundColor: currentUser.avatar_color || '#c9a86c', color: '#14120c' }}
                   >
                     {currentUser.avatar_emoji || '•'}
                   </span>
@@ -226,7 +226,7 @@ export default function App() {
             </div>
             <div className="sw-card px-5 py-4">
               <p className="sw-label">{lastPlaceUser ? 'Wooden spoon' : 'Field'}</p>
-              <p className="mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase">
+              <p className={`mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase ${lastPlaceUser ? 'text-coral' : ''}`}>
                 {lastPlaceUser ? lastPlaceUser.name : `${data.leaderboard?.length || 0} players`}
               </p>
             </div>

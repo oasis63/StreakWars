@@ -119,7 +119,7 @@ export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }
                   ) : (
                     <>
                       {parts.fresh > 0 && (
-                        <div className="h-full" style={{ width: `${(parts.fresh / mix) * 100}%`, background: 'var(--volt)' }} />
+                        <div className="h-full" style={{ width: `${(parts.fresh / mix) * 100}%`, background: 'var(--fresh)' }} />
                       )}
                       {parts.resub > 0 && (
                         <div className="h-full" style={{ width: `${(parts.resub / mix) * 100}%`, background: 'var(--med)' }} />
@@ -137,7 +137,7 @@ export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }
       </div>
 
       <p className="mt-3 px-1 text-[12px] text-muted font-mono leading-relaxed">
-        Easy 1 · Med 3 · Hard 5 · bar = score vs leader · volt fresh · amber resub · coral streak
+        Easy 1 · Med 3 · Hard 5 · bar = score vs leader · teal fresh · amber resub · wine streak
         {leaderboard.some((u) => u.multiplier_active) ? ' · 1.5× underdog' : ''}
       </p>
     </section>

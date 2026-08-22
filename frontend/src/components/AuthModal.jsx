@@ -118,7 +118,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
         {/* Modal Header & Tabs */}
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--volt)] flex items-center justify-center mx-auto text-xl shadow-inner">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--volt-dim)] border border-[var(--volt)]/30 text-[var(--volt)] flex items-center justify-center mx-auto text-xl shadow-inner">
             <KeyRound className="w-6 h-6" />
           </div>
           <div>
@@ -138,7 +138,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               onClick={() => { setTab('login'); setError(null); }}
               className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                 tab === 'login'
-                  ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                  ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
                   : 'text-muted hover:text-cream'
               }`}
             >
@@ -149,7 +149,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               onClick={() => { setTab('register'); setError(null); }}
               className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                  ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
                   : 'text-muted hover:text-cream'
               }`}
             >
@@ -199,7 +199,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-code font-bold text-xs transition-all shadow-md shadow-emerald-500/20"
+              className="w-full py-2.5 rounded-xl bg-[var(--volt)] hover:bg-[var(--volt-hover)] disabled:opacity-50 text-[#14120c] font-code font-bold text-xs transition-all shadow-md"
             >
               {loading ? 'Logging in...' : 'Log In'}
             </button>
@@ -255,7 +255,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     type="button"
                     onClick={() => setRegAvatar(av)}
                     className={`w-7 h-7 rounded-lg text-sm flex items-center justify-center transition-all ${
-                      regAvatar === av ? 'bg-emerald-500/30 border border-emerald-500 scale-110' : 'hover:bg-[var(--ink-2)]'
+                      regAvatar === av ? 'bg-[var(--volt-dim)] border border-[var(--volt)] scale-110' : 'hover:bg-[var(--ink-2)]'
                     }`}
                   >
                     {av}
@@ -285,7 +285,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-code font-bold text-xs transition-all shadow-md shadow-emerald-500/20"
+              className="w-full py-2.5 rounded-xl bg-[var(--volt)] hover:bg-[var(--volt-hover)] disabled:opacity-50 text-[#14120c] font-code font-bold text-xs transition-all shadow-md"
             >
               {loading ? 'Creating Account...' : 'Create Account & Log In'}
             </button>

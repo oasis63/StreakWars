@@ -3,55 +3,64 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0c0b09;
-  --ink-2: #161410;
-  --panel: #1c1a16;
-  --line: rgba(243, 239, 228, 0.1);
-  --line-strong: rgba(243, 239, 228, 0.18);
-  --cream: #f3efe4;
-  --muted: #9a9488;
-  --volt: #d8ff3e;
-  --volt-dim: rgba(216, 255, 62, 0.12);
-  --coral: #ff5c39;
-  --easy: #7ddea5;
-  --med: #e8b86d;
-  --hard: #f07167;
-  --glow: rgba(216, 255, 62, 0.08);
+  --ink: #050505;
+  --ink-2: #0e0e0e;
+  --panel: #121212;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --cream: #f2f0eb;
+  --muted: #8a8a8a;
+  --volt: #c9b07a;
+  --volt-hover: #d4bd8a;
+  --volt-dim: rgba(201, 176, 122, 0.14);
+  --fresh: #4eb8a8;
+  --coral: #d26778;
+  --easy: #4eb8a8;
+  --med: #e0a45c;
+  --hard: #d26778;
+  --glow: rgba(201, 176, 122, 0.08);
+  --glow-2: rgba(78, 184, 168, 0.06);
 }
 
 html.mode-dark.theme-ember {
-  --ink: #100c08;
-  --ink-2: #1a140e;
-  --panel: #221a12;
-  --line: rgba(255, 220, 170, 0.1);
-  --line-strong: rgba(255, 220, 170, 0.2);
-  --cream: #f6ead8;
-  --muted: #b39a7a;
-  --volt: #ffb020;
-  --volt-dim: rgba(255, 176, 32, 0.14);
-  --coral: #ff6b3d;
-  --easy: #8fd4a4;
-  --med: #ffb020;
-  --hard: #ff6b3d;
-  --glow: rgba(255, 176, 32, 0.1);
+  --ink: #050505;
+  --ink-2: #0e0e0e;
+  --panel: #121212;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --cream: #f2f0eb;
+  --muted: #8a8a8a;
+  --volt: #e0a45c;
+  --volt-hover: #ebb06a;
+  --volt-dim: rgba(224, 164, 92, 0.16);
+  --fresh: #5bb89a;
+  --coral: #e06a58;
+  --easy: #5bb89a;
+  --med: #e0a45c;
+  --hard: #e06a58;
+  --glow: rgba(224, 164, 92, 0.1);
+  --glow-2: rgba(91, 184, 154, 0.06);
 }
 
 html.mode-dark.theme-rose,
 html.mode-dark.theme-duotone {
-  --ink: #12090a;
-  --ink-2: #1c1012;
-  --panel: #241418;
-  --line: rgba(255, 210, 200, 0.1);
-  --line-strong: rgba(255, 210, 200, 0.2);
-  --cream: #f7e8e4;
-  --muted: #b39490;
-  --volt: #ff7a59;
-  --volt-dim: rgba(255, 122, 89, 0.14);
-  --coral: #ff5c39;
-  --easy: #8fd4a4;
-  --med: #e8b86d;
-  --hard: #ff7a59;
-  --glow: rgba(255, 122, 89, 0.1);
+  --ink: #050505;
+  --ink-2: #0e0e0e;
+  --panel: #121212;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --cream: #f2f0eb;
+  --muted: #8a8a8a;
+  --volt: #d48a9a;
+  --volt-hover: #e098a6;
+  --volt-dim: rgba(212, 138, 154, 0.16);
+  --fresh: #6bb8c4;
+  --coral: #e06a7a;
+  --easy: #6bb8c4;
+  --med: #e0a45c;
+  --hard: #e06a7a;
+  --glow: rgba(212, 138, 154, 0.1);
+  --glow-2: rgba(107, 184, 196, 0.06);
 }
 
 /* Light mode — high contrast. !important so it beats :root and leftover theme classes. */
@@ -64,28 +73,33 @@ html.mode-light .sw-page,
   --panel: #ffffff !important;
   --line: rgba(0, 0, 0, 0.12) !important;
   --line-strong: rgba(0, 0, 0, 0.22) !important;
-  --cream: #111111 !important;
-  --muted: #3f3f46 !important;
-  --volt: #166534 !important;
-  --volt-dim: rgba(22, 101, 52, 0.12) !important;
-  --coral: #b91c1c !important;
-  --easy: #166534 !important;
-  --med: #9a3412 !important;
-  --hard: #991b1b !important;
+  --cream: #1c1914 !important;
+  --muted: #57534e !important;
+  --volt: #7a6235 !important;
+  --volt-hover: #6b542c !important;
+  --volt-dim: rgba(122, 98, 53, 0.12) !important;
+  --fresh: #0f766e !important;
+  --coral: #b4234a !important;
+  --easy: #0f766e !important;
+  --med: #b45309 !important;
+  --hard: #b4234a !important;
   --glow: transparent !important;
+  --glow-2: transparent !important;
 }
 
 html.mode-light.theme-ember,
 html.mode-light.theme-ember .sw-page {
-  --volt: #9a3412 !important;
-  --volt-dim: rgba(154, 52, 18, 0.12) !important;
+  --volt: #8a5a22 !important;
+  --volt-hover: #754c1c !important;
+  --volt-dim: rgba(138, 90, 34, 0.12) !important;
 }
 
 html.mode-light.theme-rose,
 html.mode-light.theme-duotone,
 html.mode-light.theme-rose .sw-page {
-  --volt: #9f1239 !important;
-  --volt-dim: rgba(159, 18, 57, 0.12) !important;
+  --volt: #8a4a42 !important;
+  --volt-hover: #753c36 !important;
+  --volt-dim: rgba(138, 74, 66, 0.12) !important;
 }
 
 @layer base {
@@ -116,10 +130,11 @@ html.mode-light.theme-rose .sw-page {
     min-height: 100vh;
     background-color: var(--ink);
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, var(--glow), transparent 55%),
-      linear-gradient(rgba(243, 239, 228, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(243, 239, 228, 0.035) 1px, transparent 1px);
-    background-size: auto, 48px 48px, 48px 48px;
+      radial-gradient(ellipse 70% 45% at 12% -8%, var(--glow), transparent 58%),
+      radial-gradient(ellipse 55% 40% at 92% 0%, var(--glow-2), transparent 55%),
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: auto, auto, 48px 48px, 48px 48px;
     color: var(--cream);
   }
 
@@ -195,7 +210,7 @@ html.mode-light.theme-rose .sw-page {
   }
 
   .sw-btn-primary:hover {
-    background: #e7ff6a;
+    background: var(--volt-hover);
   }
 
   .status-chip {
@@ -213,23 +228,23 @@ html.mode-light.theme-rose .sw-page {
   }
 
   .lane-stripe-bg {
-    background-color: #12100d;
+    background-color: #0a0a0a;
     background-image: repeating-linear-gradient(
       90deg,
       transparent,
       transparent 16px,
-      rgba(243, 239, 228, 0.04) 16px,
-      rgba(243, 239, 228, 0.04) 32px
+      rgba(255, 255, 255, 0.04) 16px,
+      rgba(255, 255, 255, 0.04) 32px
     );
   }
 
   .checkerboard-bg {
     background-color: var(--cream);
     background-image:
-      linear-gradient(45deg, #14120c 25%, transparent 25%),
-      linear-gradient(-45deg, #14120c 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #14120c 75%),
-      linear-gradient(-45deg, transparent 75%, #14120c 75%);
+      linear-gradient(45deg, #0a0a0a 25%, transparent 25%),
+      linear-gradient(-45deg, #0a0a0a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #0a0a0a 75%),
+      linear-gradient(-45deg, transparent 75%, #0a0a0a 75%);
     background-size: 8px 8px;
     background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
     opacity: 0.7;
@@ -256,8 +271,8 @@ html.mode-light.theme-rose .sw-page {
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--ink); }
-::-webkit-scrollbar-thumb { background: #3a362f; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #524c42; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f3f; }
 
 html.mode-light,
 html.mode-light body,
@@ -281,7 +296,7 @@ html.mode-light .hud-card {
 
 html.mode-light .sw-kicker,
 html.mode-light .text-volt {
-  color: #166534 !important;
+  color: #7a6235 !important;
 }
 
 html.mode-light .sw-label,
@@ -296,22 +311,22 @@ html.mode-light .sw-btn {
   color: #111111 !important;
 }
 
-html.mode-light .text-easy { color: #166534 !important; }
-html.mode-light .text-med { color: #9a3412 !important; }
-html.mode-light .text-hard { color: #991b1b !important; }
+html.mode-light .text-easy { color: #0f766e !important; }
+html.mode-light .text-med { color: #b45309 !important; }
+html.mode-light .text-hard { color: #b4234a !important; }
 
 html.mode-light .status-chip {
   color: #111111 !important;
 }
 
 html.mode-light .sw-btn-primary {
-  background: #166534 !important;
-  border-color: #166534 !important;
+  background: #7a6235 !important;
+  border-color: #7a6235 !important;
   color: #ffffff !important;
 }
 
 html.mode-light .sw-btn-primary:hover {
-  background: #14532d !important;
+  background: #6b542c !important;
   filter: none;
 }
 
@@ -348,7 +363,7 @@ html.mode-light ::-webkit-scrollbar-thumb:hover {
 
 html.mode-light ::selection {
   color: #ffffff;
-  background: #166534;
+  background: #7a6235;
 }
 
 html.mode-light .text-amber-200,

@@ -17,6 +17,7 @@ export default {
         },
         cream: 'var(--cream)',
         volt: 'var(--volt)',
+        fresh: 'var(--fresh)',
         coral: 'var(--coral)',
         muted: 'var(--muted)',
         easy: 'var(--easy)',

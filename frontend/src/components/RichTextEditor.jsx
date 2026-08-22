@@ -163,7 +163,7 @@ export default function RichTextEditor({
                     key={lang.id}
                     type="button"
                     onClick={() => insertCodeBlock(lang.id)}
-                    className="w-full text-left px-2 py-1.5 rounded hover:bg-emerald-500/20 hover:text-[var(--volt)] text-cream font-mono transition-colors"
+                    className="w-full text-left px-2 py-1.5 rounded hover:bg-[var(--volt-dim)] hover:text-[var(--volt)] text-cream font-mono transition-colors"
                   >
                     {lang.name}
                   </button>
@@ -253,7 +253,7 @@ export default function RichTextEditor({
             onClick={() => setActiveTab('write')}
             className={`px-2.5 py-1 rounded flex items-center gap-1 font-semibold transition-all ${
               activeTab === 'write'
-                ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
                 : 'text-muted hover:text-cream'
             }`}
           >
@@ -265,7 +265,7 @@ export default function RichTextEditor({
             onClick={() => setActiveTab('preview')}
             className={`px-2.5 py-1 rounded flex items-center gap-1 font-semibold transition-all ${
               activeTab === 'preview'
-                ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
                 : 'text-muted hover:text-cream'
             }`}
           >
@@ -308,7 +308,7 @@ export default function RichTextEditor({
             type="button"
             onClick={onSubmit}
             disabled={isSubmitting || !value.trim()}
-            className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-code font-bold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+            className="px-4 py-1.5 rounded-lg bg-[var(--volt)] hover:bg-[var(--volt-hover)] disabled:opacity-50 text-[#14120c] font-code font-bold text-xs transition-all flex items-center gap-1.5"
           >
             {isSubmitting ? 'Posting...' : submitLabel}
           </button>
