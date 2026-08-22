@@ -32,7 +32,7 @@ export default function RaceWormChart({ wormData, leaderboard, leaderName }) {
 
       <div className="flex flex-wrap gap-x-4 gap-y-2">
         {leaderboard.map((user) => (
-          <span key={user.user_id} className="inline-flex items-center gap-2 text-sm text-muted">
+          <span key={user.user_id} className="inline-flex items-center gap-2 text-sm text-muted uppercase">
             <span className="w-2 h-2 rounded-full" style={{ background: user.color || '#d8ff3e' }} />
             {user.name}
           </span>

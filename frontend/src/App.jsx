@@ -226,7 +226,7 @@ export default function App() {
             </div>
             <div className="sw-card px-5 py-4">
               <p className="sw-label">{lastPlaceUser ? 'Wooden spoon' : 'Field'}</p>
-              <p className="mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate">
+              <p className="mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase">
                 {lastPlaceUser ? lastPlaceUser.name : `${data.leaderboard?.length || 0} players`}
               </p>
             </div>
