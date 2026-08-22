@@ -37,10 +37,10 @@ export default function Countdown({ endDateStr, daysRemaining, challengeEnded })
   }
 
   return (
-    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-medium text-slate-300 shadow-inner">
+    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[var(--panel)] border border-[var(--line)] text-xs font-medium text-cream shadow-inner">
       <Clock className="w-4 h-4 text-indigo-400 animate-pulse" />
-      <span className="font-bold text-white">{daysRemaining}d</span>
-      <span className="text-slate-500">left</span>
+      <span className="font-bold text-cream">{daysRemaining}d</span>
+      <span className="text-muted">left</span>
       <span className="text-indigo-400 font-mono">
         {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
       </span>

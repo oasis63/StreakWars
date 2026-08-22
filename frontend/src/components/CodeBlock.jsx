@@ -94,7 +94,7 @@ export default function CodeBlock({ code, language = 'text', maxLines = 15 }) {
   };
 
   return (
-    <div className="my-3 rounded-xl border border-slate-800 bg-[#0d1117] overflow-hidden shadow-2xl font-code text-xs">
+    <div className="sw-codeblock my-3 rounded-xl border border-slate-800 bg-[#0d1117] overflow-hidden shadow-2xl font-code text-xs">
       {/* Code Header Bar */}
       <div className="bg-[#161b22] px-4 py-2 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2 text-slate-400">

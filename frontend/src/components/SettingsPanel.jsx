@@ -1,16 +1,36 @@
 import React, { useState } from 'react';
-import { X, User, Trash2, AlertTriangle } from 'lucide-react';
+import { X, Trash2, AlertTriangle } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import ThemeToggle from './ThemeToggle';
 
-export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated, activeTheme = 'green', onThemeChange }) {
+const THEMES = [
+  {
+    id: 'green',
+    name: 'Volt',
+    hint: 'Acid lime on warm ink',
+    swatch: '#d8ff3e',
+  },
+  {
+    id: 'ember',
+    name: 'Ember',
+    hint: 'Amber glow, no cool blues',
+    swatch: '#ffb020',
+  },
+  {
+    id: 'rose',
+    name: 'Coral',
+    hint: 'Warm coral accent',
+    swatch: '#ff7a59',
+  },
+];
+
+export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
   const [error, setError] = useState(null);
-
-  // Delete challenge confirmation state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteStep, setDeleteStep] = useState(1); // 1: title check, 2: DELETE check
+  const [deleteStep, setDeleteStep] = useState(1);
   const [titleInput, setTitleInput] = useState('');
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -32,15 +52,11 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newName.trim(),
-          leetcode_username: newUsername.trim()
-        })
+          leetcode_username: newUsername.trim(),
+        }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to add player.');
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to add player.');
       setNewName('');
       setNewUsername('');
       if (onSettingsUpdated) onSettingsUpdated();
@@ -52,12 +68,10 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   };
 
   const handleRemoveUser = async (userId, name) => {
-    if (!window.confirm(`Are you sure you want to remove ${name}?`)) return;
+    if (!window.confirm(`Remove ${name} from the circuit?`)) return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/settings/users/${userId}`, { method: 'DELETE' });
-      if (res.ok && onSettingsUpdated) {
-        onSettingsUpdated();
-      }
+      if (res.ok && onSettingsUpdated) onSettingsUpdated();
     } catch (err) {
       console.error(err);
     }
@@ -90,232 +104,186 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
 
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/70 backdrop-blur-sm flex justify-end animate-fade-in">
-        <div className="w-full max-w-md bg-[#0f172a] border-l border-slate-800 h-full flex flex-col shadow-2xl font-['Inter',sans-serif] relative">
-          
-          {/* Header */}
-          <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-            <h2 className="text-xl font-mono-title font-bold text-white flex items-center gap-2">
-              ⚙️ Settings
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
-            >
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" onClick={onClose}>
+        <aside
+          className="w-full max-w-[400px] h-full bg-[var(--ink-2)] border-l border-[var(--line)] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-5 border-b border-[var(--line)] flex items-center justify-between">
+            <div>
+              <p className="sw-kicker">Circuit</p>
+              <h2 className="text-xl font-semibold tracking-tight mt-1">Settings</h2>
+            </div>
+            <button type="button" onClick={onClose} className="sw-btn p-2" aria-label="Close settings">
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Body Drawer */}
-          <div className="p-6 overflow-y-auto space-y-6 flex-1 pb-16">
-            {/* Section 1: PLAYERS list */}
-            <div className="space-y-3">
-              <div className="text-xs font-bold font-code text-slate-400 uppercase tracking-wider">
-                PLAYERS
-              </div>
-
+          <div className="px-6 py-6 overflow-y-auto flex-1 space-y-8">
+            <section className="space-y-3">
+              <p className="sw-label">Players</p>
               <div className="space-y-2">
                 {leaderboard && leaderboard.map((u) => (
                   <div
                     key={u.user_id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-[#1e293b]/70 border border-slate-800 text-xs font-code"
+                    className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--panel)] border border-[var(--line)]"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <User className="w-4 h-4 text-emerald-400" />
-                      <span className="font-bold text-white font-mono-title text-sm">{u.name}</span>
-                      <span className="text-slate-400">@{u.leetcode_username}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-lg leading-none">{u.emoji || u.reactive_icon || '👤'}</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{u.name}</p>
+                        <p className="text-xs text-muted font-mono truncate">@{u.leetcode_username}</p>
+                      </div>
                     </div>
-
                     <button
+                      type="button"
                       onClick={() => handleRemoveUser(u.user_id, u.name)}
-                      className="text-slate-600/30 hover:text-red-400 text-[10px] font-code opacity-10 hover:opacity-100 transition-all duration-300 px-2 py-0.5 rounded cursor-pointer select-none"
-                      title={`Remove ${u.name}`}
+                      className="text-xs text-muted hover:text-coral shrink-0"
                     >
                       Remove
                     </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* Section 2: Add participant */}
-            <div className="hud-card p-4 border border-slate-800 space-y-3">
-              <div className="text-xs font-bold font-code text-slate-300">
-                Add participant
-              </div>
-
+            <section className="sw-card p-4 space-y-3">
+              <p className="sw-label">Add participant</p>
               {error && (
-                <div className="p-2.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-code">
-                  {error}
-                </div>
+                <p className="text-sm text-coral border border-coral/30 rounded-lg px-3 py-2">{error}</p>
               )}
-
               <form onSubmit={handleAddUser} className="space-y-2.5">
                 <input
-                  type="text"
+                  className="sw-input text-sm"
                   placeholder="Name"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full bg-[#0b101b] border border-slate-700 rounded-lg px-3.5 py-2 text-xs font-code text-white focus:outline-none focus:border-emerald-500"
                   required
                 />
-
                 <input
-                  type="text"
+                  className="sw-input text-sm"
                   placeholder="LeetCode username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  className="w-full bg-[#0b101b] border border-slate-700 rounded-lg px-3.5 py-2 text-xs font-code text-white focus:outline-none focus:border-emerald-500"
                   required
                 />
-
-                <button
-                  type="submit"
-                  disabled={addingUser}
-                  className="w-full py-2.5 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-bold font-code text-xs flex items-center justify-center gap-1.5 hover:bg-emerald-500/30 transition-all"
-                >
-                  {addingUser ? 'Adding...' : '+ Add player'}
+                <button type="submit" disabled={addingUser} className="sw-btn sw-btn-primary w-full py-2.5 disabled:opacity-50">
+                  {addingUser ? 'Adding…' : '+ Add player'}
                 </button>
-
-                <p className="text-[11px] font-code text-slate-500">
-                  Late joiners score from their add date, not Day 0.
-                </p>
+                <p className="text-xs text-muted">Joiners can be added only before the start date.</p>
               </form>
-            </div>
+            </section>
 
-            {/* Section 3: APPEARANCE */}
-            <div className="space-y-3 pt-2">
-              <div className="text-xs font-bold font-code text-slate-400 uppercase tracking-wider">
-                APPEARANCE
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="sw-label">Appearance</p>
+                {onColorModeChange && (
+                  <ThemeToggle colorMode={colorMode} onChange={onColorModeChange} />
+                )}
               </div>
-
-              <div
-                onClick={() => onThemeChange && onThemeChange('green')}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  activeTheme === 'green'
-                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-300'
-                    : 'bg-[#1e293b]/60 border-slate-800 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between font-code text-xs font-bold">
-                  <span>Green - default</span>
-                  {activeTheme === 'green' && <span className="text-[10px] uppercase font-bold text-emerald-400">active</span>}
-                </div>
-                <p className="text-[11px] font-code text-slate-400 mt-1">
-                  Clean green accent · HUD glow matches brand color
-                </p>
+              <div className="space-y-2">
+                {THEMES.map((t) => {
+                  const on = activeTheme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => onThemeChange && onThemeChange(t.id)}
+                      className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
+                        on
+                          ? 'border-[var(--volt)] bg-[var(--volt-dim)]'
+                          : 'border-[var(--line)] bg-[var(--panel)] hover:border-[var(--line-strong)]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{t.name}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full" style={{ background: t.swatch }} />
+                          {on && <span className="sw-label text-[var(--volt)]">Active</span>}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted mt-1">{t.hint}</p>
+                    </button>
+                  );
+                })}
               </div>
-
-              <div
-                onClick={() => onThemeChange && onThemeChange('duotone')}
-                className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                  activeTheme === 'duotone'
-                    ? 'bg-indigo-500/10 border-indigo-500 text-indigo-300'
-                    : 'bg-[#1e293b]/60 border-slate-800 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between font-code text-xs font-bold">
-                  <span>Red / Blue duotone</span>
-                  {activeTheme === 'duotone' && <span className="text-[10px] uppercase font-bold text-indigo-400">active</span>}
-                </div>
-                <p className="text-[11px] font-code text-slate-400 mt-1">
-                  Red primary glow · blue secondary accent
-                </p>
-              </div>
-            </div>
+            </section>
           </div>
 
-          {/* Low Opacity Delete Button at Bottom Right Corner */}
-          <div className="absolute bottom-3 right-3 z-20">
+          <div className="px-6 py-4 border-t border-[var(--line)]">
             <button
+              type="button"
               onClick={openDeleteModal}
-              className="text-slate-600/40 hover:text-red-400 text-[10px] font-code opacity-10 hover:opacity-100 transition-all duration-300 flex items-center gap-1 px-2 py-1 rounded cursor-pointer select-none"
-              title="Delete challenge permanently"
+              className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
             >
-              <Trash2 className="w-3 h-3" /> Delete Challenge
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete challenge
             </button>
           </div>
-        </div>
+        </aside>
       </div>
 
-      {/* Delete Confirmation Modal Dialog */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-['Inter',sans-serif]">
-          <div className="max-w-md w-full hud-card border border-red-500/40 p-6 rounded-2xl shadow-2xl space-y-5 relative">
-            <div className="flex items-center gap-3 text-red-400">
-              <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="text-lg font-mono-title font-bold text-white">
-                Delete Challenge?
-              </h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="max-w-md w-full sw-card p-6 space-y-5 border-coral/40">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-coral shrink-0" />
+              <h3 className="text-lg font-semibold">Delete challenge?</h3>
             </div>
 
             {deleteStep === 1 ? (
-              <div className="space-y-4 text-xs font-code">
-                <p className="text-slate-300 leading-relaxed">
-                  This action will permanently delete <span className="text-red-400 font-bold">"{currentTitle}"</span> and all participant data.
+              <div className="space-y-4 text-sm">
+                <p className="text-muted leading-relaxed">
+                  This permanently deletes <span className="text-cream font-semibold">“{currentTitle}”</span> and all participant data.
                 </p>
-                <div className="space-y-2">
-                  <label className="block text-slate-400">
-                    To confirm, type <span className="text-white font-bold">"{currentTitle}"</span> below:
-                  </label>
-                  <input
-                    type="text"
-                    value={titleInput}
-                    onChange={(e) => setTitleInput(e.target.value)}
-                    placeholder={currentTitle}
-                    className="w-full bg-[#0b101b] border border-slate-700 rounded-lg px-3.5 py-2.5 text-white focus:outline-none focus:border-red-500"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
-                  >
+                <label className="block text-muted">
+                  Type <span className="text-cream font-semibold">“{currentTitle}”</span> to continue
+                </label>
+                <input
+                  className="sw-input"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  placeholder={currentTitle}
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => setDeleteModalOpen(false)} className="sw-btn">
                     Cancel
                   </button>
                   <button
+                    type="button"
                     disabled={titleInput.trim() !== currentTitle.trim()}
                     onClick={() => setDeleteStep(2)}
-                    className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 font-bold hover:bg-red-500/30 disabled:opacity-40"
+                    className="sw-btn border-coral/40 text-coral disabled:opacity-40"
                   >
-                    Continue →
+                    Continue
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 text-xs font-code">
-                <p className="text-red-300 font-bold leading-relaxed">
-                  ⚠️ Final Confirmation: Are you absolutely sure?
-                </p>
-                <div className="space-y-2">
-                  <label className="block text-slate-400">
-                    Type <span className="text-red-400 font-bold">DELETE</span> to permanently erase everything:
-                  </label>
-                  <input
-                    type="text"
-                    value={deleteInput}
-                    onChange={(e) => setDeleteInput(e.target.value)}
-                    placeholder="DELETE"
-                    className="w-full bg-[#0b101b] border border-red-500/50 rounded-lg px-3.5 py-2.5 text-white focus:outline-none focus:border-red-500"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
-                  >
+              <div className="space-y-4 text-sm">
+                <p className="text-coral font-medium">Final confirmation. This cannot be undone.</p>
+                <label className="block text-muted">
+                  Type <span className="text-coral font-semibold">DELETE</span>
+                </label>
+                <input
+                  className="sw-input"
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  placeholder="DELETE"
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => setDeleteModalOpen(false)} className="sw-btn">
                     Cancel
                   </button>
                   <button
+                    type="button"
                     disabled={deleteInput.trim() !== 'DELETE' || deleting}
                     onClick={handleConfirmDelete}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 shadow-lg shadow-red-600/30 disabled:opacity-40 flex items-center gap-1.5"
+                    className="sw-btn bg-coral border-coral text-cream disabled:opacity-40"
                   >
-                    {deleting ? 'Deleting...' : '🗑️ Delete Challenge Permanently'}
+                    {deleting ? 'Deleting…' : 'Delete permanently'}
                   </button>
                 </div>
               </div>

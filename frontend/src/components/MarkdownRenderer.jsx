@@ -56,27 +56,17 @@ export default function MarkdownRenderer({ content, maxCollapsedLines = 10, enab
       .replace(/>/g, '&gt;');
 
     // Headings
-    text = text.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-white mt-3 mb-1 font-mono-title">$1</h3>');
-    text = text.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-white mt-4 mb-1 font-mono-title">$1</h2>');
-    text = text.replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold text-white mt-4 mb-2 font-mono-title">$1</h1>');
+    text = text.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-cream mt-3 mb-1 font-mono-title">$1</h3>');
+    text = text.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-cream mt-4 mb-1 font-mono-title">$1</h2>');
+    text = text.replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold text-cream mt-4 mb-2 font-mono-title">$1</h1>');
 
-    // Inline code
-    text = text.replace(/`([^`]+)`/g, '<code class="bg-slate-800/90 text-emerald-400 px-1.5 py-0.5 rounded font-code text-[12px] border border-slate-700/60 font-mono">$1</code>');
+    text = text.replace(/`([^`]+)`/g, '<code class="bg-[var(--ink-2)] text-[var(--volt)] px-1.5 py-0.5 rounded font-code text-[12px] border border-[var(--line)] font-mono">$1</code>');
 
-    // Bold
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
-    
-    // Italic
-    text = text.replace(/\*([^*]+)\*/g, '<em class="italic text-slate-200">$1</em>');
-
-    // Strikethrough
-    text = text.replace(/~~([^~]+)~~/g, '<del class="line-through text-slate-500">$1</del>');
-
-    // Blockquote
-    text = text.replace(/^&gt; (.*$)/gim, '<blockquote class="border-l-4 border-emerald-500/80 pl-3 py-1.5 my-2 bg-slate-900/60 text-slate-300 italic rounded-r-lg">$1</blockquote>');
-
-    // Bullet lists
-    text = text.replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc text-slate-300">$1</li>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-cream">$1</strong>');
+    text = text.replace(/\*([^*]+)\*/g, '<em class="italic text-muted">$1</em>');
+    text = text.replace(/~~([^~]+)~~/g, '<del class="line-through text-muted">$1</del>');
+    text = text.replace(/^&gt; (.*$)/gim, '<blockquote class="border-l-4 border-[var(--volt)] pl-3 py-1.5 my-2 bg-[var(--ink-2)] text-muted italic rounded-r-lg">$1</blockquote>');
+    text = text.replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc text-cream">$1</li>');
 
     // Links
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:underline font-semibold">$1</a>');
@@ -90,7 +80,7 @@ export default function MarkdownRenderer({ content, maxCollapsedLines = 10, enab
   return (
     <div className="relative space-y-2">
       <div 
-        className={`prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed font-['Inter',sans-serif] transition-all duration-300 ${
+        className={`prose max-w-none text-cream text-sm leading-relaxed font-['Inter',sans-serif] transition-all duration-300 ${
           enableTruncate && isContentLong && !isExpanded ? 'max-h-[320px] overflow-hidden relative' : ''
         }`}
       >
@@ -98,7 +88,7 @@ export default function MarkdownRenderer({ content, maxCollapsedLines = 10, enab
 
         {/* Gradient Mask for collapsed view */}
         {enableTruncate && isContentLong && !isExpanded && (
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[var(--panel)] to-transparent pointer-events-none" />
         )}
       </div>
 
@@ -107,7 +97,7 @@ export default function MarkdownRenderer({ content, maxCollapsedLines = 10, enab
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           type="button"
-          className="mt-2 text-xs font-code font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all shadow-sm"
+          className="mt-2 text-xs font-code font-bold text-[var(--volt)] flex items-center gap-1 bg-[var(--ink-2)] border border-[var(--line)] px-3 py-1.5 rounded-xl transition-all"
         >
           {isExpanded ? (
             <>

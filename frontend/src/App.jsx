@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Settings as SettingsIcon, RefreshCw, Check } from 'lucide-react';
+import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn } from 'lucide-react';
 import { API_BASE_URL } from './config';
 
 import SetupForm from './components/SetupForm';
@@ -11,17 +11,18 @@ import UserProfile from './components/UserProfile';
 import SettingsPanel from './components/SettingsPanel';
 import DiscussionForum from './components/DiscussionForum';
 import AuthModal from './components/AuthModal';
+import ThemeToggle from './components/ThemeToggle';
 
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard' | 'track'
+  const [activeTab, setActiveTab] = useState('leaderboard');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('streakwars_theme') || 'green');
+  const [colorMode, setColorMode] = useState(() => localStorage.getItem('streakwars_color_mode') || 'dark');
 
-  // User Auth Session State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('streakwars_user');
@@ -38,11 +39,11 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/leaderboard`);
       const d = await res.json();
-      
+
       if (d.leaderboard && d.leaderboard.length > 0) {
         const currentLeaderId = d.leaderboard[0].user_id;
         if (prevLeaderIdRef.current !== null && prevLeaderIdRef.current !== currentLeaderId) {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#d8ff3e', '#f3efe4', '#ff5c39'] });
         }
         prevLeaderIdRef.current = currentLeaderId;
       }
@@ -64,6 +65,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('mode-light', 'mode-dark', 'theme-green', 'theme-ember', 'theme-rose', 'theme-duotone');
+    root.classList.add(colorMode === 'light' ? 'mode-light' : 'mode-dark');
+    root.classList.add(`theme-${theme}`);
+    localStorage.setItem('streakwars_color_mode', colorMode);
+  }, [colorMode, theme]);
+
+  useEffect(() => {
     if (!data || !data.challenge_end_date) return;
     const calculateTimeLeft = () => {
       const parts = data.challenge_end_date.split('-');
@@ -73,7 +82,7 @@ export default function App() {
       }
       const diff = endMs - Date.now();
       if (diff <= 0) {
-        setTimeLeftStr('Challenge Completed');
+        setTimeLeftStr('Complete');
         return;
       }
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -93,9 +102,7 @@ export default function App() {
     setSyncing(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/sync`, { method: 'POST' });
-      if (res.ok) {
-        await fetchData();
-      }
+      if (res.ok) await fetchData();
     } catch (err) {
       console.error('Sync failed:', err);
     } finally {
@@ -105,26 +112,33 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0b101b] flex items-center justify-center text-slate-400 font-code">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs uppercase tracking-wider text-emerald-400 font-bold">Loading 4Coders1Bill...</p>
+      <div className={`sw-page flex items-center justify-center ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 rounded-full border-2 border-volt border-t-transparent animate-spin" />
+          <p className="sw-label">Loading standings</p>
         </div>
       </div>
     );
   }
 
-  // If no challenge is setup in DB yet, show SetupForm to create challenge & users!
   if (!data || data.setup_required) {
-    return <SetupForm onSetupComplete={() => fetchData()} />;
+    return (
+      <>
+        <div className="fixed top-4 right-4 z-30">
+          <ThemeToggle colorMode={colorMode} onChange={setColorMode} />
+        </div>
+        <SetupForm onSetupComplete={() => fetchData()} />
+      </>
+    );
   }
 
-  // If viewing single user profile details
   if (selectedUserId) {
     return (
       <UserProfile
         userId={selectedUserId}
         onClose={() => setSelectedUserId(null)}
+        colorMode={colorMode}
+        onColorModeChange={setColorMode}
       />
     );
   }
@@ -132,173 +146,162 @@ export default function App() {
   const lastPlaceUser = data.leaderboard && data.leaderboard.length > 1
     ? data.leaderboard[data.leaderboard.length - 1]
     : null;
+  const leader = data.leaderboard?.[0];
+  const duration = data.challenge_duration_days || 30;
+  const currentDay = Math.min(data.current_day || 1, duration);
+
+  const tabs = [
+    { id: 'leaderboard', label: 'Standings' },
+    { id: 'track', label: 'Circuit' },
+    { id: 'forum', label: 'Forum', icon: MessageSquare },
+  ];
 
   return (
-    <div className={`min-h-screen bg-[#0b101b] text-slate-100 font-['Inter',sans-serif] p-4 sm:p-8 space-y-6 max-w-6xl mx-auto theme-${theme}`}>
-      
-      {/* App Header */}
-      <header className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-mono-title font-extrabold text-emerald-400 tracking-tight">
-              {data.challenge_title || '4Coders1Bill'}
-            </h1>
-            <p className="text-xs font-code text-slate-400 mt-1">
-              {data.challenge_duration_days || 30}-day LeetCode challenge · {data.party_stakes || 'lowest score buys the party'}
-            </p>
-          </div>
+    <div className={`sw-page ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <header className="space-y-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="sw-kicker mb-3">StreakWars</p>
+              <h1 className="text-[2.15rem] sm:text-[2.75rem] font-semibold tracking-tight leading-[1.05] text-cream">
+                {data.challenge_title || 'StreakWars'}
+              </h1>
+              <p className="mt-3 text-[15px] text-muted max-w-xl leading-relaxed">
+                {duration}-day LeetCode circuit
+                <span className="mx-2 text-muted">/</span>
+                {data.party_stakes || 'lowest score buys the party'}
+              </p>
+            </div>
 
-          {/* Top Right Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* User Session Badge / Login Button */}
-            {currentUser ? (
-              <button
-                onClick={() => {
-                  if (window.confirm(`Log out from @${currentUser.username}?`)) {
-                    localStorage.removeItem('streakwars_user');
-                    setCurrentUser(null);
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 font-code text-xs flex items-center gap-2 transition-all shadow-inner"
-                title="Click to log out"
-              >
-                <div 
-                  className="w-5 h-5 rounded-md flex items-center justify-center text-xs text-white font-bold"
-                  style={{ backgroundColor: currentUser.avatar_color || '#6366f1' }}
+            <div className="flex items-center gap-2 shrink-0">
+              {currentUser ? (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Log out from ${currentUser.username}?`)) {
+                      localStorage.removeItem('streakwars_user');
+                      setCurrentUser(null);
+                    }
+                  }}
+                  className="sw-btn pl-1.5 pr-3 py-1"
+                  title="Log out"
                 >
-                  {currentUser.avatar_emoji || '👤'}
-                </div>
-                <span className="font-bold text-white">{currentUser.display_name}</span>
-                <span className="text-slate-400 font-normal">{currentUser.username}</span>
-              </button>
-            ) : (
+                  <span
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
+                    style={{ backgroundColor: currentUser.avatar_color || '#d8ff3e', color: '#14120c' }}
+                  >
+                    {currentUser.avatar_emoji || '•'}
+                  </span>
+                  <span className="hidden sm:inline">{currentUser.display_name}</span>
+                </button>
+              ) : (
+                <button onClick={() => setAuthModalOpen(true)} className="sw-btn">
+                  <LogIn className="w-4 h-4" />
+                  Log in
+                </button>
+              )}
               <button
-                onClick={() => setAuthModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                onClick={() => setSettingsOpen(true)}
+                className="sw-btn p-2.5"
+                title="Settings"
               >
-                <span>🔑 Log In / Register</span>
+                <SettingsIcon className="w-4 h-4" />
               </button>
-            )}
-
-            <button
-              onClick={() => setActiveTab('forum')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-code font-bold transition-all flex items-center gap-1.5 ${
-                activeTab === 'forum'
-                  ? 'bg-[#93c5fd] text-slate-950 shadow-md'
-                  : 'bg-[#1e293b]/70 text-slate-300 border border-slate-800 hover:text-white hover:border-slate-700'
-              }`}
-              title="Discussion Forum"
-            >
-              💬 Discussion Forum
-            </button>
-
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-xl bg-[#1e293b]/70 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
-              title="Settings"
-            >
-              <SettingsIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Controls & Nav Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-          {/* Tab buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-2 rounded-xl text-xs font-code font-bold transition-all ${
-                activeTab === 'leaderboard'
-                  ? 'bg-[#93c5fd] text-slate-950 shadow-md'
-                  : 'bg-[#1e293b]/70 text-slate-300 border border-slate-800 hover:text-white'
-              }`}
-            >
-              Leaderboard
-            </button>
-            <button
-              onClick={() => setActiveTab('track')}
-              className={`px-4 py-2 rounded-xl text-xs font-code font-bold transition-all ${
-                activeTab === 'track'
-                  ? 'bg-[#93c5fd] text-slate-950 shadow-md'
-                  : 'bg-[#1e293b]/70 text-slate-300 border border-slate-800 hover:text-white'
-              }`}
-            >
-              <span className="inline-block" style={{ transform: 'scaleX(-1)' }}>🏎️</span> Track to Victory
-            </button>
+              <ThemeToggle colorMode={colorMode} onChange={setColorMode} />
+            </div>
           </div>
 
-          {/* Sync Controls */}
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sw-card px-5 py-4">
+              <p className="sw-label">Time left</p>
+              <p className="mt-2 font-mono text-[1.35rem] sm:text-2xl font-medium tabular-nums tracking-tight text-volt">
+                {timeLeftStr || `${data.days_remaining}d remaining`}
+              </p>
+            </div>
+            <div className="sw-card px-5 py-4">
+              <p className="sw-label">Challenge day</p>
+              <p className="mt-2 font-mono text-[1.35rem] sm:text-2xl font-medium tabular-nums tracking-tight">
+                {currentDay}
+                <span className="text-muted text-lg"> / {duration}</span>
+              </p>
+            </div>
+            <div className="sw-card px-5 py-4">
+              <p className="sw-label">{lastPlaceUser ? 'Wooden spoon' : 'Field'}</p>
+              <p className="mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate">
+                {lastPlaceUser ? lastPlaceUser.name : `${data.leaderboard?.length || 0} players`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
+            <nav className="flex items-end gap-6">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const on = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative pb-3 text-[15px] font-medium flex items-center gap-1.5 transition-colors ${
+                      on ? 'text-cream' : 'text-muted hover:text-cream'
+                    }`}
+                  >
+                    {Icon && <Icon className="w-4 h-4" />}
+                    {tab.label}
+                    {on && (
+                      <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-volt" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="px-4 py-2 rounded-xl bg-[#93c5fd]/20 border border-[#93c5fd]/40 text-[#93c5fd] font-code font-bold text-xs flex items-center gap-1.5 hover:bg-[#93c5fd]/30 transition-all disabled:opacity-50"
+              className="sw-btn text-[13px] disabled:opacity-40"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing...' : 'Sync Now'}
+              {syncing ? 'Syncing' : 'Sync'}
             </button>
-
-            <span className="text-xs font-code text-emerald-400 flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" /> Synced {data.leaderboard ? data.leaderboard.length : 0} users
-            </span>
           </div>
-        </div>
+        </header>
 
-        {/* Time Left Row */}
-        <div className="text-sm font-code font-bold text-slate-300 flex items-center gap-2">
-          <span>Time left:</span>
-          <span className="text-emerald-400 font-extrabold tracking-wide">
-            {timeLeftStr || `${data.days_remaining}d remaining`}
-          </span>
-        </div>
+        <main className="mt-8 space-y-6 relative">
+          {syncing && <div className="sync-scan-line" />}
 
-        {/* Spoon Ticker Banner */}
-        {lastPlaceUser && (
-          <div className="hud-card p-3 rounded-xl border border-slate-800 text-center font-code text-xs text-amber-200">
-            🥄 <span className="font-bold text-white">{lastPlaceUser.name}</span> is currently the spoon
-          </div>
-        )}
-      </header>
+          {activeTab === 'leaderboard' && (
+            <>
+              <Leaderboard
+                leaderboard={data.leaderboard}
+                daysRemaining={data.days_remaining}
+                onSelectUser={(userId) => setSelectedUserId(userId)}
+              />
+              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={leader?.name} />
+            </>
+          )}
 
-      {/* Main Tab Content with Laser Scan Animation */}
-      <main className="space-y-6 relative overflow-hidden rounded-2xl p-0.5">
-        {syncing && <div className="sync-scan-line" />}
+          {activeTab === 'track' && (
+            <>
+              <RaceTrack leaderboard={data.leaderboard} />
+              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={leader?.name} />
+            </>
+          )}
 
-        {activeTab === 'leaderboard' && (
-          <>
-            <Leaderboard
-              leaderboard={data.leaderboard}
-              daysRemaining={data.days_remaining}
-              onSelectUser={(userId) => setSelectedUserId(userId)}
+          {activeTab === 'forum' && (
+            <DiscussionForum
+              currentUser={currentUser}
+              onOpenAuth={() => setAuthModalOpen(true)}
             />
-            <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
-          </>
-        )}
+          )}
+        </main>
+      </div>
 
-        {activeTab === 'track' && (
-          <>
-            <RaceTrack leaderboard={data.leaderboard} />
-            <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} />
-          </>
-        )}
-
-        {activeTab === 'forum' && (
-          <DiscussionForum 
-            currentUser={currentUser}
-            onOpenAuth={() => setAuthModalOpen(true)}
-          />
-        )}
-      </main>
-
-      {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={(user) => setCurrentUser(user)}
       />
 
-      {/* Settings Drawer */}
       <SettingsPanel
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -306,6 +309,8 @@ export default function App() {
         leaderboard={data.leaderboard}
         onSettingsUpdated={() => fetchData()}
         activeTheme={theme}
+        colorMode={colorMode}
+        onColorModeChange={setColorMode}
         onThemeChange={(newTheme) => {
           setTheme(newTheme);
           localStorage.setItem('streakwars_theme', newTheme);
