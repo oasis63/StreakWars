@@ -14,20 +14,20 @@ import { BarChart3 } from 'lucide-react';
 export default function ManhattanChart({ manhattanData, leaderboard }) {
   if (!manhattanData || manhattanData.length === 0 || !leaderboard || leaderboard.length === 0) {
     return (
-      <div className="glass-card rounded-3xl p-6 text-center text-slate-400 text-sm">
+      <div className="glass-card rounded-3xl p-6 text-center text-muted text-sm">
         No daily solve data available yet.
       </div>
     );
   }
 
   return (
-    <div className="glass-card rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
+    <div className="glass-card rounded-3xl p-6 border border-[var(--line)] shadow-xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-emerald-400" /> Daily Solves Manhattan Chart
+          <h2 className="text-xl font-bold text-cream flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[var(--volt)]" /> Daily Solves Manhattan Chart
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Total problems solved per participant by challenge day
           </p>
         </div>

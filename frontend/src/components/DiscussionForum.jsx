@@ -284,21 +284,21 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
   const activeThread = topics.find(t => t.id === activeThreadId);
 
   return (
-    <div className="hud-card p-6 border border-slate-800 space-y-6 font-['Inter',sans-serif]">
+    <div className="hud-card p-5 sm:p-7 space-y-6 font-['Inter',sans-serif]">
       {/* Forum Main Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-mono-title font-bold text-white flex items-center gap-2">
-              💬 Discussion Forum
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-xl font-mono-title font-bold text-cream">
+              Discussion forum
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-code font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-amber-400" />
-              30-Day Auto Cleanup
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-200 border border-amber-500/25 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              30-day auto-cleanup
             </span>
           </div>
-          <p className="text-xs font-code text-slate-400 mt-1">
-            Start discussion threads, share code solutions, and comment with developer personas. Anyone can edit or delete messages!
+          <p className="text-sm text-muted mt-2 max-w-xl leading-relaxed">
+            Share solutions, streak tactics, and debug help. Threads older than 30 days are removed automatically.
           </p>
         </div>
 
@@ -307,10 +307,10 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
           {viewMode === 'list' && (
             <button
               onClick={() => setViewMode('create')}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-code font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/20"
+              className="sw-btn sw-btn-primary"
             >
               <Plus className="w-4 h-4" />
-              Start a Discussion
+              Start a discussion
             </button>
           )}
 
@@ -320,7 +320,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 setViewMode('list');
                 setActiveThreadId(null);
               }}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-[var(--ink-2)] hover:bg-[var(--ink-2)] text-cream font-code font-bold text-xs flex items-center gap-1.5 transition-all"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Discussions
@@ -329,7 +329,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
           <button
             onClick={fetchTopics}
-            className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-code text-xs flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 rounded-xl bg-[var(--ink-2)] border border-[var(--line)] hover:border-[var(--line-strong)] text-cream hover:text-cream font-code text-xs flex items-center gap-1.5 transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -337,7 +337,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
       </div>
 
       {/* Active Poster Identity Box */}
-      <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-inner">
+      <div className="bg-[var(--ink-2)] border border-[var(--line)] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div 
             className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-lg shrink-0 border border-white/10"
@@ -348,10 +348,10 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono-title font-bold text-sm text-white">
+              <span className="font-mono-title font-bold text-sm text-cream">
                 {activePoster?.name || 'Loading profile...'}
               </span>
-              <span className="text-xs font-code text-slate-400">
+              <span className="text-xs font-code text-muted">
                 {activePoster?.handle}
               </span>
               {activePoster?.title && (
@@ -363,7 +363,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 </span>
               )}
             </div>
-            <div className="text-[11px] font-code text-slate-400 flex items-center gap-1 mt-0.5">
+            <div className="text-[11px] font-code text-muted flex items-center gap-1 mt-0.5">
               <Sparkles className="w-3 h-3 text-amber-400 inline" />
               <span>
                 {postMode === 'account' 
@@ -377,14 +377,14 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
         {/* Identity Selector Controls */}
         <div className="flex items-center gap-2 flex-wrap">
           {currentUser ? (
-            <div className="flex bg-slate-900 rounded-xl p-1 border border-slate-800 font-code text-xs">
+            <div className="flex bg-[var(--panel)] rounded-xl p-1 border border-[var(--line)] font-code text-xs">
               <button
                 type="button"
                 onClick={() => setPostMode('account')}
                 className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
                   postMode === 'account'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
+                    : 'text-muted hover:text-cream'
                 }`}
               >
                 <span>👤 Real Profile</span>
@@ -394,8 +394,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 onClick={() => setPostMode('anonymous')}
                 className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
                   postMode === 'anonymous'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/30'
+                    : 'text-muted hover:text-cream'
                 }`}
               >
                 <span>🎲 Anonymously</span>
@@ -405,7 +405,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
             <button
               type="button"
               onClick={onOpenAuth}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
             >
               <span>🔑 Log In to Post as Yourself</span>
             </button>
@@ -426,15 +426,15 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
       {/* MODE 1: CREATE NEW TOPIC FORM */}
       {viewMode === 'create' && (
-        <div className="hud-card p-6 border border-emerald-500/30 bg-slate-900/90 rounded-2xl space-y-4 shadow-2xl">
-          <h3 className="text-lg font-mono-title font-bold text-emerald-400 flex items-center gap-2">
+        <div className="hud-card p-6 border border-emerald-500/30 bg-[var(--panel)] rounded-2xl space-y-4 shadow-2xl">
+          <h3 className="text-lg font-mono-title font-bold text-[var(--volt)] flex items-center gap-2">
             <Plus className="w-5 h-5" /> Start a New Discussion Thread
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Discussion Title */}
             <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-code font-bold text-slate-300">
+              <label className="text-xs font-code font-bold text-cream">
                 Discussion Title *
               </label>
               <input
@@ -442,19 +442,19 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 value={newTopicTitle}
                 onChange={(e) => setNewTopicTitle(e.target.value)}
                 placeholder="e.g., Optimal O(N) solution for today's LeetCode Medium..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-['Inter',sans-serif]"
+                className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3.5 py-2 text-sm text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-['Inter',sans-serif]"
               />
             </div>
 
             {/* Category Selector */}
             <div className="space-y-1">
-              <label className="text-xs font-code font-bold text-slate-300">
+              <label className="text-xs font-code font-bold text-cream">
                 Category
               </label>
               <select
                 value={newTopicCategory}
                 onChange={(e) => setNewTopicCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-code"
+                className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3 py-2 text-xs text-cream focus:outline-none focus:border-[var(--volt)] font-code"
               >
                 <option value="💡 Problem Solutions">💡 Problem Solutions</option>
                 <option value="⚡ Streak Strategies">⚡ Streak Strategies</option>
@@ -466,7 +466,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
           {/* Description & Code Editor */}
           <div className="space-y-1">
-            <label className="text-xs font-code font-bold text-slate-300">
+            <label className="text-xs font-code font-bold text-cream">
               Discussion Content & Code Snippets *
             </label>
             <RichTextEditor
@@ -485,7 +485,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
       {viewMode === 'thread' && activeThread && (
         <div className="space-y-6">
           {/* Main Discussion Topic Card */}
-          <div className="hud-card p-6 border border-slate-700 bg-slate-900/80 rounded-2xl space-y-4 shadow-xl">
+          <div className="hud-card p-6 border border-[var(--line)] bg-[var(--panel)] rounded-2xl space-y-4 shadow-xl">
             {/* Header / Author */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3">
@@ -498,10 +498,10 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono-title font-bold text-base text-white">
+                    <span className="font-mono-title font-bold text-base text-cream">
                       {activeThread.author_name}
                     </span>
-                    <span className="text-xs font-code text-slate-400">
+                    <span className="text-xs font-code text-muted">
                       {activeThread.author_handle}
                     </span>
                     {activeThread.author_title && (
@@ -513,8 +513,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-code text-slate-400 mt-0.5">
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">
+                  <div className="flex items-center gap-2 text-[11px] font-code text-muted mt-0.5">
+                    <span className="px-2 py-0.5 rounded bg-[var(--ink-2)] text-cream font-bold">
                       {activeThread.category || 'General'}
                     </span>
                     <span>•</span>
@@ -527,7 +527,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleStartEdit(activeThread)}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-code text-xs flex items-center gap-1 transition-colors"
+                  className="px-2.5 py-1.5 rounded-lg bg-[var(--ink-2)] hover:bg-[var(--ink-2)] text-cream font-code text-xs flex items-center gap-1 transition-colors"
                 >
                   <Edit className="w-3.5 h-3.5 text-amber-400" />
                   <span>Edit</span>
@@ -544,7 +544,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
             {/* Inline Topic Edit Mode */}
             {editingPostId === activeThread.id ? (
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-amber-500/40 space-y-3">
+              <div className="bg-[var(--ink)] p-4 rounded-xl border border-amber-500/40 space-y-3">
                 <div className="text-xs font-code font-bold text-amber-400">
                   Editing Discussion Topic
                 </div>
@@ -552,7 +552,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white font-mono-title"
+                  className="w-full bg-[var(--ink-2)] border border-[var(--line)] rounded-lg px-3 py-1.5 text-sm text-cream font-mono-title"
                 />
                 <RichTextEditor
                   value={editContent}
@@ -563,7 +563,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 />
                 <button
                   onClick={() => setEditingPostId(null)}
-                  className="text-xs font-code text-slate-400 hover:text-white"
+                  className="text-xs font-code text-muted hover:text-cream"
                 >
                   Cancel Edit
                 </button>
@@ -571,7 +571,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
             ) : (
               <>
                 {/* Topic Title & Main Content */}
-                <h1 className="text-xl font-mono-title font-bold text-white pt-1">
+                <h1 className="text-xl font-mono-title font-bold text-cream pt-1">
                   {activeThread.title}
                 </h1>
                 <div className="pt-2">
@@ -581,7 +581,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
             )}
 
             {/* Topic Footer Stats */}
-            <div className="flex items-center gap-4 pt-3 border-t border-slate-800 text-xs font-code text-slate-400">
+            <div className="flex items-center gap-4 pt-3 border-t border-[var(--line)] text-xs font-code text-muted">
               <button
                 onClick={() => handleLikePost(activeThread.id)}
                 className="flex items-center gap-1.5 hover:text-rose-400 transition-colors group"
@@ -590,17 +590,17 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 <span className="font-bold">{activeThread.likes || 0} Upvotes</span>
               </button>
               <span>•</span>
-              <span className="flex items-center gap-1 text-slate-300">
-                <MessageSquare className="w-4 h-4 text-emerald-400" />
-                <strong className="text-white">{activeThread.replies_count || 0}</strong> Comments
+              <span className="flex items-center gap-1 text-cream">
+                <MessageSquare className="w-4 h-4 text-[var(--volt)]" />
+                <strong className="text-cream">{activeThread.replies_count || 0}</strong> Comments
               </span>
             </div>
           </div>
 
           {/* Comments Section Header */}
           <div className="space-y-4">
-            <h3 className="text-lg font-mono-title font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-lg font-mono-title font-bold text-cream flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[var(--volt)]" />
               Comments & Discussion ({activeThread.replies ? activeThread.replies.length : 0})
             </h3>
 
@@ -610,7 +610,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 {activeThread.replies.map((reply) => (
                   <div 
                     key={reply.id} 
-                    className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md"
+                    className="bg-[var(--panel)] p-4 rounded-xl border border-[var(--line)] space-y-3 shadow-md"
                   >
                     {/* Comment Header */}
                     <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -621,26 +621,26 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                         >
                           {reply.author_avatar || '🐱‍💻'}
                         </div>
-                        <span className="font-mono-title font-bold text-xs text-white">
+                        <span className="font-mono-title font-bold text-xs text-cream">
                           {reply.author_name}
                         </span>
-                        <span className="text-[11px] font-code text-slate-400">
+                        <span className="text-[11px] font-code text-muted">
                           {reply.author_handle}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 text-[11px] font-code text-slate-400">
+                      <div className="flex items-center gap-2 text-[11px] font-code text-muted">
                         <span>{formatTimeAgo(reply.created_at)}</span>
                         <button
                           onClick={() => handleStartEdit(reply)}
-                          className="text-slate-400 hover:text-amber-300 p-1"
+                          className="text-muted hover:text-amber-300 p-1"
                           title="Edit comment"
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeletePost(reply.id)}
-                          className="text-slate-400 hover:text-red-400 p-1"
+                          className="text-muted hover:text-red-400 p-1"
                           title="Delete comment"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -650,7 +650,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
                     {/* Inline Comment Edit Mode */}
                     {editingPostId === reply.id ? (
-                      <div className="bg-slate-950 p-3 rounded-lg border border-amber-500/40 space-y-2">
+                      <div className="bg-[var(--ink)] p-3 rounded-lg border border-amber-500/40 space-y-2">
                         <RichTextEditor
                           value={editContent}
                           onChange={setEditContent}
@@ -660,7 +660,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                         />
                         <button
                           onClick={() => setEditingPostId(null)}
-                          className="text-xs font-code text-slate-400 hover:text-white"
+                          className="text-xs font-code text-muted hover:text-cream"
                         >
                           Cancel
                         </button>
@@ -670,7 +670,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                     )}
 
                     {/* Comment Footer */}
-                    <div className="flex items-center gap-3 pt-1 text-[11px] font-code text-slate-400 border-t border-slate-800/60">
+                    <div className="flex items-center gap-3 pt-1 text-[11px] font-code text-muted border-t border-[var(--line)]">
                       <button
                         onClick={() => handleLikePost(reply.id)}
                         className="flex items-center gap-1 hover:text-rose-400 transition-colors"
@@ -683,15 +683,15 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 font-code text-xs text-slate-500 bg-slate-900/40 rounded-xl border border-slate-800/60">
+              <div className="text-center py-6 font-code text-xs text-muted bg-[var(--ink-2)] rounded-xl border border-[var(--line)]">
                 No comments yet. Be the first to leave a comment below!
               </div>
             )}
 
             {/* Comment Composer at Bottom of All Comments */}
-            <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2 mt-6">
-              <label className="text-xs font-code font-bold text-slate-300 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="bg-[var(--ink-2)] p-4 rounded-2xl border border-[var(--line)] space-y-2 mt-6">
+              <label className="text-xs font-code font-bold text-cream flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-[var(--volt)]" />
                 Join the Discussion
               </label>
               <RichTextEditor
@@ -713,15 +713,15 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
           {/* Category Filter Pills & Search */}
           <div className="space-y-3">
             {/* Categories */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-code">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-sm">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3.5 py-2 rounded-xl font-medium transition-colors whitespace-nowrap ${
                     selectedCategory === cat.id
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
-                      : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                      ? 'bg-[var(--volt-dim)] text-[var(--volt)] border border-[var(--volt)]/35'
+                      : 'bg-[var(--ink-2)] text-muted border border-[var(--line)] hover:text-cream'
                   }`}
                 >
                   <span>{cat.name}</span>
@@ -732,26 +732,26 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
             {/* Search & Sort Controls */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
               <div className="relative flex-1 min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search discussion threads or code..."
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 font-code"
+                  className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl pl-9 pr-3 py-1.5 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code"
                 />
               </div>
 
-              <div className="flex items-center gap-2 font-code text-xs text-slate-400">
+              <div className="flex items-center gap-2 font-code text-xs text-muted">
                 <Filter className="w-3.5 h-3.5" />
                 <span>Sort:</span>
-                <div className="flex bg-slate-900 rounded-xl p-0.5 border border-slate-800">
+                <div className="flex bg-[var(--panel)] rounded-xl p-0.5 border border-[var(--line)]">
                   <button
                     onClick={() => setSortBy('newest')}
                     className={`px-2.5 py-1 rounded-lg transition-all ${
                       sortBy === 'newest'
-                        ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-[var(--volt-dim)] text-[var(--volt)] font-bold border border-[var(--volt)]/30'
+                        : 'text-muted hover:text-cream'
                     }`}
                   >
                     Newest
@@ -760,8 +760,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                     onClick={() => setSortBy('comments')}
                     className={`px-2.5 py-1 rounded-lg transition-all ${
                       sortBy === 'comments'
-                        ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-[var(--volt-dim)] text-[var(--volt)] font-bold border border-[var(--volt)]/30'
+                        : 'text-muted hover:text-cream'
                     }`}
                   >
                     Most Comments 💬
@@ -770,8 +770,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                     onClick={() => setSortBy('popular')}
                     className={`px-2.5 py-1 rounded-lg transition-all ${
                       sortBy === 'popular'
-                        ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-[var(--volt-dim)] text-[var(--volt)] font-bold border border-[var(--volt)]/30'
+                        : 'text-muted hover:text-cream'
                     }`}
                   >
                     Most Liked 🔥
@@ -783,13 +783,13 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
           {/* Topics List Cards */}
           {loading ? (
-            <div className="text-center py-12 font-code text-slate-500 text-xs">
+            <div className="text-center py-12 font-code text-muted text-xs">
               Loading discussion threads...
             </div>
           ) : filteredTopics.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/40 rounded-2xl border border-slate-800/80 space-y-3">
-              <MessageSquare className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="font-code text-xs text-slate-400">
+            <div className="text-center py-12 bg-[var(--ink-2)] rounded-2xl border border-[var(--line)] space-y-3">
+              <MessageSquare className="w-8 h-8 text-muted mx-auto" />
+              <p className="font-code text-xs text-muted">
                 No discussion threads found. Click "Start a Discussion" above to post the first topic!
               </p>
             </div>
@@ -798,7 +798,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
               {filteredTopics.map((topic) => (
                 <div 
                   key={topic.id} 
-                  className="hud-card p-5 rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/60 shadow-lg transition-all space-y-3"
+                  className="rounded-xl border border-[var(--line)] bg-[var(--ink-2)] hover:border-[var(--line-strong)] p-5 transition-colors space-y-3.5"
                 >
                   {/* Topic Card Top Bar */}
                   <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -812,10 +812,10 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono-title font-bold text-sm text-white">
+                          <span className="font-mono-title font-bold text-sm text-cream">
                             {topic.author_name}
                           </span>
-                          <span className="text-xs font-code text-slate-400">
+                          <span className="text-xs font-code text-muted">
                             {topic.author_handle}
                           </span>
                           {topic.author_title && (
@@ -827,8 +827,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] font-code text-slate-400 mt-0.5">
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">
+                        <div className="flex items-center gap-2 text-[11px] font-code text-muted mt-0.5">
+                          <span className="px-2 py-0.5 rounded bg-[var(--panel)] border border-[var(--line)] text-cream font-bold">
                             {topic.category || 'General'}
                           </span>
                           <span>•</span>
@@ -841,14 +841,14 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleStartEdit(topic)}
-                        className="p-1.5 text-slate-400 hover:text-amber-300 rounded-lg hover:bg-slate-800 transition-colors"
+                        className="p-1.5 text-muted hover:text-amber-300 rounded-lg hover:bg-[var(--ink-2)] transition-colors"
                         title="Edit topic"
                       >
                         <Edit className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeletePost(topic.id, true)}
-                        className="p-1.5 text-slate-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                        className="p-1.5 text-muted hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
                         title="Delete topic thread"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -858,7 +858,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
                   {/* Inline Topic Edit Mode */}
                   {editingPostId === topic.id ? (
-                    <div className="bg-slate-950 p-4 rounded-xl border border-amber-500/40 space-y-3">
+                    <div className="bg-[var(--ink)] p-4 rounded-xl border border-amber-500/40 space-y-3">
                       <div className="text-xs font-code font-bold text-amber-400">
                         Editing Topic Thread
                       </div>
@@ -866,7 +866,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                         type="text"
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white font-mono-title"
+                        className="w-full bg-[var(--ink-2)] border border-[var(--line)] rounded-lg px-3 py-1.5 text-sm text-cream font-mono-title"
                       />
                       <RichTextEditor
                         value={editContent}
@@ -877,7 +877,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                       />
                       <button
                         onClick={() => setEditingPostId(null)}
-                        className="text-xs font-code text-slate-400 hover:text-white"
+                        className="text-xs font-code text-muted hover:text-cream"
                       >
                         Cancel
                       </button>
@@ -892,7 +892,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                         }}
                         className="text-left w-full group"
                       >
-                        <h3 className="text-base font-mono-title font-bold text-white group-hover:text-emerald-400 transition-colors">
+                        <h3 className="text-base font-mono-title font-bold text-cream group-hover:text-[var(--volt)] transition-colors">
                           {topic.title || 'Untitled Discussion'}
                         </h3>
                       </button>
@@ -902,14 +902,14 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                   )}
 
                   {/* Card Footer Bar */}
-                  <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-800/60 text-xs font-code">
+                  <div className="flex items-center justify-between gap-4 pt-3 border-t border-[var(--line)] text-sm">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikePost(topic.id)}
-                        className="flex items-center gap-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                        className="flex items-center gap-1.5 text-muted hover:text-rose-400 transition-colors"
                       >
                         <Heart className={`w-4 h-4 ${topic.likes > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
-                        <span className="font-bold">{topic.likes || 0}</span>
+                        <span className="font-medium">{topic.likes || 0}</span>
                       </button>
 
                       <button
@@ -917,10 +917,10 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                           setActiveThreadId(topic.id);
                           setViewMode('thread');
                         }}
-                        className="flex items-center gap-1.5 text-slate-300 hover:text-emerald-400 transition-colors font-bold"
+                        className="flex items-center gap-1.5 text-muted hover:text-[var(--volt)] transition-colors"
                       >
-                        <MessageSquare className="w-4 h-4 text-emerald-400" />
-                        <span>{topic.replies_count || 0} Comments</span>
+                        <MessageSquare className="w-4 h-4" />
+                        <span>{topic.replies_count || 0} comments</span>
                       </button>
                     </div>
 
@@ -929,9 +929,9 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
                         setActiveThreadId(topic.id);
                         setViewMode('thread');
                       }}
-                      className="text-emerald-400 font-bold text-xs hover:underline flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-lg bg-[var(--volt-dim)] border border-[var(--volt)]/25 text-[var(--volt)] font-semibold text-sm hover:bg-[var(--volt)] hover:text-ink transition-colors"
                     >
-                      <span>Join Discussion →</span>
+                      Open thread
                     </button>
                   </div>
                 </div>

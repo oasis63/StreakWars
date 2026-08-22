@@ -106,26 +106,26 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn font-['Inter',sans-serif]">
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-md">
+      <div className="relative w-full max-w-md sw-card p-6 space-y-5">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+          className="absolute right-4 top-4 text-muted hover:text-cream p-1 rounded-lg transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header & Tabs */}
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto text-xl shadow-inner">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--volt)] flex items-center justify-center mx-auto text-xl shadow-inner">
             <KeyRound className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-mono-title font-bold text-white">
+            <h3 className="text-xl font-mono-title font-bold text-cream">
               {tab === 'login' ? 'Welcome Back!' : 'Create Your Account'}
             </h3>
-            <p className="text-xs font-code text-slate-400 mt-1">
+            <p className="text-xs font-code text-muted mt-1">
               {tab === 'login' 
                 ? 'Enter your username and 4-digit PIN to log in.'
                 : 'Choose a username, display name, and avatar DP.'}
@@ -133,13 +133,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex bg-slate-950 rounded-xl p-1 border border-slate-800 text-xs font-code">
+          <div className="flex bg-[var(--ink)] rounded-xl p-1 border border-[var(--line)] text-xs font-code">
             <button
               onClick={() => { setTab('login'); setError(null); }}
               className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                 tab === 'login'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                  : 'text-muted hover:text-cream'
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -149,8 +149,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               onClick={() => { setTab('register'); setError(null); }}
               className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
                 tab === 'register'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30'
+                  : 'text-muted hover:text-cream'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -170,30 +170,30 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         {tab === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4 font-code text-xs">
             <div className="space-y-1">
-              <label className="text-slate-300 font-bold">Username or @handle *</label>
+              <label className="text-cream font-bold">Username or @handle *</label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-slate-500 font-bold">@</span>
+                <span className="absolute left-3 top-2.5 text-muted font-bold">@</span>
                 <input
                   type="text"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   placeholder="rajesh"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-code"
+                  className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl pl-8 pr-3 py-2 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-bold">4-Digit PIN Code</label>
+              <label className="text-cream font-bold">4-Digit PIN Code</label>
               <input
                 type="password"
                 maxLength={4}
                 value={loginPin}
                 onChange={(e) => setLoginPin(e.target.value)}
                 placeholder="1234"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-code tracking-widest"
+                className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3.5 py-2 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code tracking-widest"
               />
-              <span className="text-[10px] text-slate-500 block">Default PIN is 1234</span>
+              <span className="text-[10px] text-muted block">Default PIN is 1234</span>
             </div>
 
             <button
@@ -211,51 +211,51 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <form onSubmit={handleRegister} className="space-y-4 font-code text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-slate-300 font-bold">Username (@handle) *</label>
+                <label className="text-cream font-bold">Username (@handle) *</label>
                 <input
                   type="text"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
                   placeholder="rajesh_lc"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-code"
+                  className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3 py-2 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-300 font-bold">Display Name *</label>
+                <label className="text-cream font-bold">Display Name *</label>
                 <input
                   type="text"
                   value={regDisplayName}
                   onChange={(e) => setRegDisplayName(e.target.value)}
                   placeholder="Rajesh"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-code"
+                  className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3 py-2 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-300 font-bold">4-Digit PIN Code (for quick login)</label>
+              <label className="text-cream font-bold">4-Digit PIN Code (for quick login)</label>
               <input
                 type="password"
                 maxLength={4}
                 value={regPin}
                 onChange={(e) => setRegPin(e.target.value)}
                 placeholder="1234"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-code tracking-widest"
+                className="w-full bg-[var(--ink)] border border-[var(--line)] rounded-xl px-3.5 py-2 text-xs text-cream placeholder:text-muted focus:outline-none focus:border-[var(--volt)] font-code tracking-widest"
               />
             </div>
 
             {/* Avatar Emoji Selector */}
             <div className="space-y-1.5">
-              <label className="text-slate-300 font-bold">Avatar DP Icon</label>
-              <div className="flex flex-wrap gap-1.5 bg-slate-950 p-2 rounded-xl border border-slate-800">
+              <label className="text-cream font-bold">Avatar DP Icon</label>
+              <div className="flex flex-wrap gap-1.5 bg-[var(--ink)] p-2 rounded-xl border border-[var(--line)]">
                 {AVATAR_OPTIONS.map((av) => (
                   <button
                     key={av}
                     type="button"
                     onClick={() => setRegAvatar(av)}
                     className={`w-7 h-7 rounded-lg text-sm flex items-center justify-center transition-all ${
-                      regAvatar === av ? 'bg-emerald-500/30 border border-emerald-500 scale-110' : 'hover:bg-slate-800'
+                      regAvatar === av ? 'bg-emerald-500/30 border border-emerald-500 scale-110' : 'hover:bg-[var(--ink-2)]'
                     }`}
                   >
                     {av}
@@ -266,8 +266,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
             {/* Avatar Color Selector */}
             <div className="space-y-1.5">
-              <label className="text-slate-300 font-bold">Avatar Color Theme</label>
-              <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+              <label className="text-cream font-bold">Avatar Color Theme</label>
+              <div className="flex items-center gap-2 bg-[var(--ink)] p-2 rounded-xl border border-[var(--line)]">
                 {COLOR_OPTIONS.map((c) => (
                   <button
                     key={c}

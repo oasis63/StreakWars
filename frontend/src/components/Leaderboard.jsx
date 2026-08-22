@@ -1,216 +1,164 @@
-import React from "react";
+import React from 'react';
+import { fmtPts, scoreLine, scoreParts } from './ScoreBreakdowns';
+
+function displayName(name) {
+  if (!name) return '';
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function rankMark(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return String(rank);
+}
+
+function DiffChip({ n, letter, tone }) {
+  return (
+    <span className="inline-flex items-baseline gap-0.5 rounded-lg bg-[var(--ink)] border border-[var(--line)] px-2 py-1 font-mono tabular-nums">
+      <span className={`text-sm font-medium ${tone}`}>{n}</span>
+      <span className="text-[10px] text-muted">{letter}</span>
+    </span>
+  );
+}
 
 export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }) {
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="hud-card p-8 border border-slate-800 text-center font-code text-slate-400">
-        No participants found. Add players in Settings to start!
+      <div className="sw-card px-8 py-14 text-center text-muted">
+        No participants yet. Add players in Settings.
       </div>
     );
   }
 
-  // Calculate max score for relative progress bars
   const maxScore = Math.max(...leaderboard.map((u) => u.score_final || 0), 1);
 
-  // Client-side date formatter using user's browser local timezone (IST)
-  const formatLastSynced = (isoString, fallback = "Just now") => {
-    if (!isoString) return fallback;
-
-    const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return fallback;
-
-    return date.toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
   return (
-    <div className="hud-card overflow-hidden border border-slate-800 shadow-2xl font-['Inter',sans-serif]">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse font-code text-xs">
-          {/* Table Header */}
-          <thead>
-            <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/60 uppercase tracking-wider text-[11px]">
-              <th className="py-3.5 px-4 w-12 text-center">#</th>
-              <th className="py-3.5 px-4">PLAYER</th>
-              <th className="py-3.5 px-4 text-center w-16">EASY</th>
-              <th className="py-3.5 px-4 text-center w-16">MED</th>
-              <th className="py-3.5 px-4 text-center w-16">HARD</th>
-              <th className="py-3.5 px-4 text-center w-36">SCORE</th>
-              <th className="py-3.5 px-4 text-right w-32">LAST SYNCED</th>
-            </tr>
-          </thead>
+    <section>
+      <div className="flex items-end justify-between mb-4 px-1">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Standings</h2>
+          <p className="text-sm text-muted mt-1">Tap a driver for credited problems</p>
+        </div>
+        <p className="sw-label hidden sm:block">
+          {daysRemaining !== undefined ? `${daysRemaining} days remaining` : 'Live'}
+        </p>
+      </div>
 
-          {/* Table Body */}
-          <tbody className="divide-y divide-slate-800/60">
-            {leaderboard.map((user, index) => {
-              const freshPts = user.fresh_pts || 0;
-              const resubPts = user.resubmit_pts || 0;
-              const totalPts = Math.max(user.score_final || 0, 1);
+      <div className="space-y-2">
+        {leaderboard.map((user) => {
+          const parts = scoreParts(user);
+          const mix = parts.total || 1;
+          const track = Math.max(12, ((user.score_final || 0) / maxScore) * 100);
+          const accent = user.rank === 1 ? 'var(--volt)' : user.is_last_place ? 'var(--coral)' : (user.color || 'var(--line)');
 
-              const freshWidth = (freshPts / maxScore) * 100;
-              const resubWidth = (resubPts / maxScore) * 100;
+          return (
+            <button
+              key={user.user_id}
+              type="button"
+              onClick={() => onSelectUser && onSelectUser(user.user_id)}
+              className="w-full text-left sw-card px-3.5 sm:px-4 pt-3 pb-3.5 relative overflow-hidden hover:border-[var(--line-strong)] transition-colors group"
+            >
+              <span
+                className="absolute left-0 top-0 bottom-0 w-[3px]"
+                style={{ background: accent }}
+              />
 
-              return (
-                <tr
-                  key={user.user_id}
-                  onClick={() => onSelectUser && onSelectUser(user.user_id)}
-                  className={`hover:bg-slate-800/40 transition-colors cursor-pointer group ${
-                    user.is_last_place ? "bg-red-500/5" : ""
+              <div className="flex items-center gap-3">
+                <span
+                  className={`shrink-0 w-9 text-center ${
+                    user.rank <= 3 ? 'text-[1.35rem] leading-none' : 'font-mono text-sm text-muted tabular-nums'
                   }`}
                 >
-                  {/* Rank Badge Column */}
-                  <td className="py-4 px-4 text-center font-bold">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-mono-title">
-                      {user.rank === 1
-                        ? "🥇"
-                        : user.rank === 2
-                          ? "🥈"
-                          : user.rank === 3
-                            ? "🥉"
-                            : user.rank}
+                  {rankMark(user.rank)}
+                </span>
+
+                <span
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[1.45rem] leading-none shrink-0 border"
+                  style={{
+                    backgroundColor: user.color ? `${user.color}33` : 'var(--volt-dim)',
+                    borderColor: user.color ? `${user.color}55` : 'var(--line)',
+                  }}
+                >
+                  {user.reactive_icon || user.emoji || '👤'}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5 min-w-0">
+                    <span className="font-bold tracking-tight truncate group-hover:text-volt transition-colors">
+                      {displayName(user.name)}
                     </span>
-                  </td>
-
-                  {/* Player Info Column */}
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      {/* Reactive Icon */}
-                      <span
-                        className="text-xl shrink-0"
-                        title={user.reactive_icon}
-                      >
-                        {user.reactive_icon || "👤"}
+                    <span className="font-mono text-xs text-muted truncate">@{user.leetcode_username}</span>
+                    {user.sync_status === 'needs_review' && (
+                      <span className="status-chip bg-med/10 text-med border border-med/25 shrink-0" title={user.sync_warning}>
+                        Review
                       </span>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono-title font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">
-                            {user.name}
-                          </span>
-                          <span className="text-slate-400 font-code text-xs">
-                            @{user.leetcode_username}
-                          </span>
-
-                          {/* Leader / Spoon Badges */}
-                          {user.rank === 1 && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider font-code">
-                              LEADER 👑
-                            </span>
-                          )}
-                          {user.is_last_place && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40 uppercase tracking-wider font-code">
-                              spoon 🥄
-                            </span>
-                          )}
-                          {user.sync_status === "needs_review" && (
-                            <span
-                              className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider font-code"
-                              title={user.sync_warning}
-                            >
-                              score review ⚠️
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Badges row */}
-                        {user.badges && user.badges.length > 0 && (
-                          <div className="flex items-center gap-1 mt-1">
-                            {user.badges.map((b, bIdx) => (
-                              <span key={bIdx} className="text-xs">
-                                {b}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* FRESH Easy Count Column */}
-                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-emerald-400">
-                    {user.easy_solved}
-                  </td>
-
-                  {/* FRESH Medium Count Column */}
-                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-amber-400">
-                    {user.medium_solved}
-                  </td>
-
-                  {/* FRESH Hard Count Column */}
-                  <td className="py-4 px-4 text-center font-mono-title font-bold text-sm text-rose-400">
-                    {user.hard_solved}
-                  </td>
-
-                  {/* SCORE Column with Score Distribution Progress Bar matching Image 2 */}
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="font-mono-title font-bold text-emerald-400 text-sm tracking-wide">
-                        ({user.score_final})
-                      </div>
-
-                      {/* Segmented Distribution Bar */}
-                      <div className="w-28 h-1.5 bg-slate-800 rounded-full flex overflow-hidden my-1">
-                        <div
-                          className="bg-emerald-400 h-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, freshWidth)}%` }}
-                          title={`Fresh pts: ${freshPts}`}
-                        />
-                        <div
-                          className="bg-[#a78bfa] h-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, resubWidth)}%` }}
-                          title={`Resubmit pts: ${resubPts}`}
-                        />
-                      </div>
-
-                      {/* Legend Subtext: e.g. 9f +3.5r */}
-                      <div className="text-[11px] font-code text-slate-400 flex items-center gap-1">
-                        <span>{freshPts}f</span>
-                        {resubPts > 0 && (
-                          <span className="text-[#a78bfa] font-bold">
-                            +{resubPts}r
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Last Synced Column - Formatted in browser's local timezone */}
-                  <td className="py-4 px-4 text-right text-slate-400 text-[11px]">
-                    {formatLastSynced(
-                      user.last_synced,
-                      user.last_synced_formatted,
                     )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </div>
+                  {user.badges?.length > 0 && (
+                    <p className="mt-0.5 flex items-center gap-1 text-[15px] leading-none">
+                      {user.badges.map((b, i) => (
+                        <span key={`${user.user_id}-b-${i}`}>{b}</span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+
+                <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                  <DiffChip n={user.easy_solved} letter="E" tone="text-easy" />
+                  <DiffChip n={user.medium_solved} letter="M" tone="text-med" />
+                  <DiffChip n={user.hard_solved} letter="H" tone="text-hard" />
+                </div>
+
+                <div className="text-right shrink-0 min-w-[4.5rem]">
+                  <p className="font-mono text-[1.35rem] font-medium tabular-nums leading-none tracking-tight">
+                    {fmtPts(user.score_final)}
+                  </p>
+                  <p className="font-mono text-[10px] text-muted mt-1 leading-none">{scoreLine(user)}</p>
+                </div>
+              </div>
+
+              <div className="sm:hidden mt-2.5 flex items-center gap-1.5">
+                <DiffChip n={user.easy_solved} letter="E" tone="text-easy" />
+                <DiffChip n={user.medium_solved} letter="M" tone="text-med" />
+                <DiffChip n={user.hard_solved} letter="H" tone="text-hard" />
+              </div>
+
+              <div className="mt-2.5 h-[5px] rounded-full bg-[var(--ink)] overflow-hidden">
+                <div
+                  className="h-full flex rounded-full overflow-hidden"
+                  style={{ width: `${track}%` }}
+                >
+                  {parts.total <= 0 ? (
+                    <div className="h-full w-full" style={{ background: accent, opacity: 0.45 }} />
+                  ) : (
+                    <>
+                      {parts.fresh > 0 && (
+                        <div className="h-full" style={{ width: `${(parts.fresh / mix) * 100}%`, background: 'var(--volt)' }} />
+                      )}
+                      {parts.resub > 0 && (
+                        <div className="h-full" style={{ width: `${(parts.resub / mix) * 100}%`, background: 'var(--med)' }} />
+                      )}
+                      {parts.streak > 0 && (
+                        <div className="h-full" style={{ width: `${(parts.streak / mix) * 100}%`, background: 'var(--coral)' }} />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Footer Legend matching Screenshot 1 & Image 2 */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between text-[11px] font-code text-slate-400">
-        <div className="flex items-center gap-3">
-          <span>Easy=1pt</span>
-          <span>•</span>
-          <span>Med=3pts</span>
-          <span>•</span>
-          <span>Hard=5pts</span>
-          <span>•</span>
-          <span>pre-challenge resub = half pts</span>
-          <span>•</span>
-          <span>streak bonus every 3 days</span>
-        </div>
-        <div>
-          <span>{daysRemaining !== undefined ? `${daysRemaining} days remaining` : 'Challenge Active'}</span>
-        </div>
-      </div>
-    </div>
+      <p className="mt-3 px-1 text-[12px] text-muted font-mono leading-relaxed">
+        Easy 1 · Med 3 · Hard 5 · bar = score vs leader · volt fresh · amber resub · coral streak
+        {leaderboard.some((u) => u.multiplier_active) ? ' · 1.5× underdog' : ''}
+      </p>
+    </section>
   );
 }

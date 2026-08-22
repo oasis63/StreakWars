@@ -28,7 +28,7 @@ export default function SyncButton({ onSyncComplete, lastSynced }) {
   return (
     <div className="flex items-center gap-2">
       {formattedTime && (
-        <span className="text-[11px] text-slate-400 hidden md:inline">
+        <span className="text-[11px] text-muted hidden md:inline">
           Synced {formattedTime}
         </span>
       )}
@@ -37,7 +37,7 @@ export default function SyncButton({ onSyncComplete, lastSynced }) {
         disabled={syncing}
         className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
           syncedRecently
-            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+            ? 'bg-emerald-500/20 border-emerald-500/40 text-[var(--volt)]'
             : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 hover:border-indigo-500/50'
         } disabled:opacity-50`}
         title="Sync latest LeetCode submissions"

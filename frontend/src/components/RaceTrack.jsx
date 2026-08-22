@@ -3,65 +3,56 @@ import React from 'react';
 export default function RaceTrack({ leaderboard }) {
   if (!leaderboard || leaderboard.length === 0) return null;
 
-  const topScore = Math.max(...leaderboard.map(p => p.score_final), 1);
+  const topScore = Math.max(...leaderboard.map((p) => p.score_final), 1);
 
   return (
-    <div className="hud-card p-6 border border-slate-800 space-y-5">
-      {/* Track Header */}
-      <div className="flex items-center justify-between">
+    <section className="sw-card p-5 sm:p-7 space-y-5">
+      <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-xl font-mono-title font-bold text-white flex items-center gap-2">
-            <span className="inline-block" style={{ transform: 'scaleX(-1)' }}>🏎️</span> Track to Victory
-          </h2>
+          <h2 className="text-lg font-semibold tracking-tight">Track to victory</h2>
+          <p className="text-sm text-muted mt-1">Position = score / leader · checkered flag is P1</p>
         </div>
-        <div className="text-xs font-code text-slate-400">
-          position = score / leader · 🏁 = Day 30 finish
-        </div>
+        <p className="sw-label">Day 30 finish</p>
       </div>
 
-      {/* Race Lanes */}
       <div className="space-y-3">
         {leaderboard.map((player) => {
-          // Leader is always at ~88% of track width, others scaled proportionally
           const ratio = topScore > 0 ? player.score_final / topScore : 0;
-          const carPositionPercent = Math.min(88, Math.max(4, ratio * 88));
+          const carLeft = Math.min(86, Math.max(8, ratio * 86));
 
           return (
             <div key={player.user_id} className="space-y-1">
-              <div className="lane-stripe-bg h-12 rounded-xl border border-slate-800/90 relative flex items-center px-3 overflow-hidden shadow-inner">
-                {/* Rank & Name Badge on Left */}
-                <div className="absolute left-3 z-10 flex items-center gap-2">
+              <div className="lane-stripe-bg h-14 rounded-xl border border-[var(--line)] relative flex items-center overflow-hidden">
+                <div className="absolute left-3 z-20 flex items-center gap-2 max-w-[42%] sm:max-w-[36%]">
                   <span
-                    className="px-2 py-0.5 rounded text-xs font-code font-bold text-slate-950 shadow"
-                    style={{ backgroundColor: player.color || '#10b981' }}
+                    className="shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono"
+                    style={{ backgroundColor: player.color || 'var(--volt)', color: '#14120c' }}
                   >
                     P{player.rank}
                   </span>
-                  <span className="font-mono-title font-bold text-sm text-white">
+                  <span className="font-semibold text-sm truncate text-cream">
                     {player.name}
                   </span>
-                  {player.is_last_place && <span className="text-sm">🥄</span>}
+                  {player.on_fire && <span title="Active streak">🔥</span>}
+                  {player.multiplier_active && <span title="Underdog boost">⚡</span>}
+                  {player.is_last_place && <span title="Wooden spoon">🥄</span>}
                 </div>
 
-                {/* Checkerboard Finish Line Flag at End */}
-                <div className="absolute right-0 top-0 bottom-0 w-10 border-l border-slate-700/60 checkerboard-bg pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-9 checkerboard-bg pointer-events-none border-l border-white/10" />
 
-                {/* Car Emoji moving along track */}
                 <div
-                  className="absolute z-20 transition-all duration-700 ease-out flex items-center gap-1"
-                  style={{ left: `calc(${carPositionPercent}% - 12px)` }}
+                  className="absolute top-1/2 z-10 flex items-center gap-1 transition-all duration-700 ease-out"
+                  style={{ left: `${carLeft}%`, transform: 'translate(-50%, -50%)' }}
                 >
-                  {player.on_fire && <span className="text-xs">🔥</span>}
                   <span
-                    className="text-2xl filter drop-shadow-md transition-transform hover:scale-125 cursor-pointer inline-block"
+                    className="text-[1.65rem] leading-none select-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]"
                     style={{ transform: 'scaleX(-1)' }}
                   >
                     {player.car_emoji || '🏎️'}
                   </span>
                 </div>
 
-                {/* Score at Right End */}
-                <div className="absolute right-12 font-code font-bold text-xs text-slate-300">
+                <div className="absolute right-11 z-20 font-mono text-sm font-medium tabular-nums text-cream">
                   {player.score_final}pts
                 </div>
               </div>
@@ -70,17 +61,14 @@ export default function RaceTrack({ leaderboard }) {
         })}
       </div>
 
-      {/* Legend Footer matching Screenshot 2 */}
-      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs font-code text-slate-400">
-        <div className="flex items-center gap-4">
-          <span>🔥 = active streak</span>
-          <span>⚡ = 1.5x boost</span>
-          <span>🥄 = current spoon</span>
+      <div className="pt-1 border-t border-[var(--line)] flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <span>🔥 Active streak</span>
+          <span>⚡ 1.5× underdog</span>
+          <span>🥄 Wooden spoon</span>
         </div>
-        <div>
-          leader always at 88% · cars animate on sync
-        </div>
+        <span className="font-mono text-xs">Leader at 86% · cars move on sync</span>
       </div>
-    </div>
+    </section>
   );
 }
