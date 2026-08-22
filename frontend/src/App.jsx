@@ -12,6 +12,7 @@ import SettingsPanel from './components/SettingsPanel';
 import DiscussionForum from './components/DiscussionForum';
 import AuthModal from './components/AuthModal';
 import ThemeToggle from './components/ThemeToggle';
+import Footer from './components/Footer';
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -294,6 +295,8 @@ export default function App() {
             />
           )}
         </main>
+
+        <Footer />
       </div>
 
       <AuthModal

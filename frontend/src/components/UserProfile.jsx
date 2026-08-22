@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ExternalLink, RotateCcw, Sparkles } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import ThemeToggle from './ThemeToggle';
+import Footer from './Footer';
 import { PointBreakdown, ScoreBreakdown } from './ScoreBreakdowns';
 
 export default function UserProfile({ userId, onClose, colorMode = 'dark', onColorModeChange }) {
@@ -159,6 +160,8 @@ export default function UserProfile({ userId, onClose, colorMode = 'dark', onCol
             </div>
           </>
         ) : null}
+
+        <Footer />
       </div>
     </div>
   );
