@@ -33,7 +33,7 @@ export default function RaceWormChart({ wormData, leaderboard, leaderName }) {
       <div className="flex flex-wrap gap-x-4 gap-y-2">
         {leaderboard.map((user) => (
           <span key={user.user_id} className="inline-flex items-center gap-2 text-sm text-muted uppercase">
-            <span className="w-2 h-2 rounded-full" style={{ background: user.color || '#d8ff3e' }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: user.color || 'var(--volt)' }} />
             {user.name}
           </span>
         ))}
@@ -73,9 +73,9 @@ export default function RaceWormChart({ wormData, leaderboard, leaderName }) {
                 type="monotone"
                 dataKey={user.user_id}
                 name={user.name}
-                stroke={user.color || '#d8ff3e'}
+                stroke={user.color || 'var(--volt)'}
                 strokeWidth={user.rank === 1 ? 2.75 : 2}
-                dot={{ r: 4, fill: user.color || '#d8ff3e', strokeWidth: 0 }}
+                dot={{ r: 4, fill: user.color || 'var(--volt)', strokeWidth: 0 }}
                 activeDot={{ r: 6, strokeWidth: 0 }}
               />
             ))}

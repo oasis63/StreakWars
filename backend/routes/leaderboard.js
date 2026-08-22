@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
                 user_id: u.user_id,
                 name: u.name,
                 leetcode_username: u.leetcode_username,
-                color: u.color || '#10b981',
+                color: u.color || '#c9a86c',
                 emoji: u.emoji || '👤',
                 car_emoji: u.car_emoji || '🏎️',
                 easy_solved: parseInt(u.easy_solved, 10) || 0,

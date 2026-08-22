@@ -405,7 +405,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
             <button
               type="button"
               onClick={onOpenAuth}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-[var(--volt)] border border-emerald-500/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-[var(--volt-dim)] hover:bg-[var(--volt)]/20 text-[var(--volt)] border border-[var(--volt)]/30 font-code font-bold text-xs flex items-center gap-1.5 transition-all"
             >
               <span>🔑 Log In to Post as Yourself</span>
             </button>
@@ -426,7 +426,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
 
       {/* MODE 1: CREATE NEW TOPIC FORM */}
       {viewMode === 'create' && (
-        <div className="hud-card p-6 border border-emerald-500/30 bg-[var(--panel)] rounded-2xl space-y-4 shadow-2xl">
+        <div className="hud-card p-6 border border-[var(--volt)]/30 bg-[var(--panel)] rounded-2xl space-y-4 shadow-2xl">
           <h3 className="text-lg font-mono-title font-bold text-[var(--volt)] flex items-center gap-2">
             <Plus className="w-5 h-5" /> Start a New Discussion Thread
           </h3>

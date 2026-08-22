@@ -110,7 +110,7 @@ export function scoreLine(user) {
 export function StandingsScoreCell({ user }) {
   const parts = scoreParts(user);
   const segments = [
-    { label: 'Fresh', value: parts.fresh, color: 'var(--volt)' },
+    { label: 'Fresh', value: parts.fresh, color: 'var(--fresh)' },
     { label: 'Resubmit', value: parts.resub, color: 'var(--med)' },
     { label: 'Streak', value: parts.streak, color: 'var(--coral)' },
   ];
@@ -130,7 +130,7 @@ export function StandingsScoreCell({ user }) {
 export function ScoreBreakdown({ user, compact = false }) {
   const parts = scoreParts(user);
   const segments = [
-    { label: 'Fresh', value: parts.fresh, color: 'var(--volt)' },
+    { label: 'Fresh', value: parts.fresh, color: 'var(--fresh)' },
     { label: 'Resubmit', value: parts.resub, color: 'var(--med)' },
     { label: 'Streak', value: parts.streak, color: 'var(--coral)' },
   ];

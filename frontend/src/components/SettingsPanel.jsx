@@ -6,21 +6,21 @@ import ThemeToggle from './ThemeToggle';
 const THEMES = [
   {
     id: 'green',
-    name: 'Volt',
-    hint: 'Acid lime on warm ink',
-    swatch: '#d8ff3e',
+    name: 'Gilt',
+    hint: 'Black canvas, gold chrome',
+    swatch: '#c9b07a',
   },
   {
     id: 'ember',
     name: 'Ember',
-    hint: 'Amber glow, no cool blues',
-    swatch: '#ffb020',
+    hint: 'Black canvas, brass chrome',
+    swatch: '#e0a45c',
   },
   {
     id: 'rose',
-    name: 'Coral',
-    hint: 'Warm coral accent',
-    swatch: '#ff7a59',
+    name: 'Terracotta',
+    hint: 'Black canvas, rose chrome',
+    swatch: '#d48a9a',
   },
 ];
 

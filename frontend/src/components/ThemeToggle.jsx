@@ -14,7 +14,7 @@ export default function ThemeToggle({ colorMode, onChange }) {
         type="button"
         onClick={() => onChange('light')}
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-          isLight ? 'bg-[#166534] text-white' : 'text-muted hover:text-cream'
+          isLight ? 'bg-[var(--volt)] text-white' : 'text-muted hover:text-cream'
         }`}
         aria-pressed={isLight}
         title="Light mode"
