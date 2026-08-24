@@ -3,7 +3,7 @@ import { KeyRound, User, UserPlus, LogIn, X, Sparkles, Check } from 'lucide-reac
 import { API_BASE_URL } from '../config';
 
 const AVATAR_OPTIONS = ['👤', '🐱‍💻', '🏎️', '⚡', '🔮', '🚀', '🥷', '🤖', '🦁', '🐉', '🛸', '🧠', '💻', '🦊', '🦅'];
-const COLOR_OPTIONS = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#14b8a6', '#3b82f6'];
+const COLOR_OPTIONS = ['#4D96FF', '#FF5DA2', '#2EC27E', '#F5C542', '#FF9A3C', '#C77DFF', '#FF5A5A', '#2EC4B6', '#8BD346'];
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -17,7 +17,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [regDisplayName, setRegDisplayName] = useState('');
   const [regPin, setRegPin] = useState('1234');
   const [regAvatar, setRegAvatar] = useState('🐱‍💻');
-  const [regColor, setRegColor] = useState('#6366f1');
+  const [regColor, setRegColor] = useState('#4D96FF');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

@@ -4,6 +4,7 @@ const router = express.Router();
 const { getDb } = require('../db/db');
 const { validateUsername, getUserStats } = require('../services/leetcodeApi');
 const { syncAllUsers, getChallengeStartMs } = require('../services/gameEngine');
+const { PLAYER_PALETTE } = require('../utils/playerColors');
 
 function getIstDateString(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -105,7 +106,6 @@ router.post('/setup', async (req, res) => {
         }
 
         const CAR_EMOJIS = ['🏎️', '🚗', '🚙', '🛻', '🚕', '🏎️'];
-        const palette = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
         const stmtUser = `
             INSERT INTO users (name, leetcode_username, color, emoji, car_emoji)
@@ -115,7 +115,7 @@ router.post('/setup', async (req, res) => {
 
         for (let i = 0; i < users.length; i++) {
             const u = users[i];
-            const color = u.color || palette[i % palette.length];
+            const color = u.color || PLAYER_PALETTE[i % PLAYER_PALETTE.length];
             const emoji = u.emoji || '👤';
             const carEmoji = u.car_emoji || CAR_EMOJIS[i % CAR_EMOJIS.length];
             await db.prepare(stmtUser).run(u.name.trim(), u.leetcode_username.trim(), color, emoji, carEmoji);

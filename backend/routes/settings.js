@@ -4,6 +4,7 @@ const router = express.Router();
 const { getDb } = require('../db/db');
 const { validateUsername, getUserStats } = require('../services/leetcodeApi');
 const { syncUser, recomputeAllStats, getChallengeConfig, getChallengeStartMs } = require('../services/gameEngine');
+const { nextUnusedColor } = require('../utils/playerColors');
 
 // POST /api/settings/users (Add user mid-challenge)
 router.post('/users', async (req, res) => {
@@ -15,7 +16,10 @@ router.post('/users', async (req, res) => {
 
         const cleanUsername = leetcode_username.trim();
         const cleanName = name.trim();
-        const userColor = color || '#6366f1';
+        const db = getDb();
+        const existingColors = (await db.prepare(`SELECT color FROM users WHERE is_deleted = 0`).all())
+            .map((row) => row.color);
+        const userColor = color || nextUnusedColor(existingColors);
         const userEmoji = emoji || '👤';
         const userCar = car_emoji || '🏎️';
 
@@ -31,7 +35,6 @@ router.post('/users', async (req, res) => {
             });
         }
 
-        const db = getDb();
         const existing = await db.prepare(`SELECT id, is_deleted FROM users WHERE leetcode_username = ?`).get(cleanUsername);
 
         let userId = null;

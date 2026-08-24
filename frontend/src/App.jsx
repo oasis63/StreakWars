@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn } from 'lucide-react';
 import { API_BASE_URL } from './config';
+import { withDistinctPlayerColors } from './lib/playerColors';
 
 import SetupForm from './components/SetupForm';
 import Leaderboard from './components/Leaderboard';
@@ -42,6 +43,7 @@ export default function App() {
       const d = await res.json();
 
       if (d.leaderboard && d.leaderboard.length > 0) {
+        d.leaderboard = withDistinctPlayerColors(d.leaderboard);
         const currentLeaderId = d.leaderboard[0].user_id;
         if (prevLeaderIdRef.current !== null && prevLeaderIdRef.current !== currentLeaderId) {
           confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#c9b07a', '#4eb8a8', '#d26778', '#ece8df'] });

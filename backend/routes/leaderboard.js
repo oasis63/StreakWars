@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db/db');
 const { getCurrentChallengeDay, recomputeAllStats } = require('../services/gameEngine');
+const { distinctColorsByUserId } = require('../utils/playerColors');
 
 // GET /api/leaderboard
 router.get('/', async (req, res) => {
@@ -44,7 +45,9 @@ router.get('/', async (req, res) => {
             ORDER BY COALESCE(s.score_final, 0) DESC, s.easy_solved DESC
         `).all();
 
-        const leaderboard = usersWithStats.map((u, index) => {
+        const usersWithDistinctColors = distinctColorsByUserId(usersWithStats);
+
+        const leaderboard = usersWithDistinctColors.map((u, index) => {
             let badges = [];
             try {
                 badges = u.badges ? JSON.parse(u.badges) : [];
