@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn } from 'lucide-react';
+import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn, Video, ExternalLink } from 'lucide-react';
 import { API_BASE_URL } from './config';
 
 import SetupForm from './components/SetupForm';
@@ -254,6 +254,17 @@ export default function App() {
                   </button>
                 );
               })}
+              <a
+                href="https://p2p-chat-production.up.railway.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative pb-3 text-[15px] font-medium flex items-center gap-1.5 text-muted hover:text-cream transition-colors"
+                title="Open peer-to-peer interview"
+              >
+                <Video className="w-4 h-4" />
+                Interview
+                <ExternalLink className="w-3 h-3 opacity-70" aria-hidden="true" />
+              </a>
             </nav>
 
             <button
