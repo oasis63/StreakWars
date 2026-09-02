@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn, Video, ExternalLink } from 'lucide-react';
+import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn, Video, ExternalLink, FileBarChart } from 'lucide-react';
 import { API_BASE_URL } from './config';
 
 import SetupForm from './components/SetupForm';
@@ -13,6 +13,7 @@ import DiscussionForum from './components/DiscussionForum';
 import AuthModal from './components/AuthModal';
 import ThemeToggle from './components/ThemeToggle';
 import Footer from './components/Footer';
+import ChallengeReport from './components/ChallengeReport';
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -33,6 +34,7 @@ export default function App() {
     }
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [reportGenerated, setReportGenerated] = useState(() => sessionStorage.getItem('streakwars_report') === '1');
 
   const prevLeaderIdRef = useRef(null);
 
@@ -150,11 +152,24 @@ export default function App() {
   const leader = data.leaderboard?.[0];
   const duration = data.challenge_duration_days || 30;
   const currentDay = Math.min(data.current_day || 1, duration);
+  const previewReport = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewReport') === '1';
+  const challengeOver = Boolean(data.challenge_ended) || timeLeftStr === 'Complete' || previewReport;
+
+  const generateReport = () => {
+    const firstOpen = !reportGenerated;
+    setReportGenerated(true);
+    sessionStorage.setItem('streakwars_report', '1');
+    setActiveTab('report');
+    if (firstOpen) {
+      confetti({ particleCount: 120, spread: 70, origin: { y: 0.45 }, colors: ['#c9b07a', '#4eb8a8', '#d26778', '#ece8df'] });
+    }
+  };
 
   const tabs = [
     { id: 'leaderboard', label: 'Standings' },
     { id: 'track', label: 'Circuit' },
     { id: 'forum', label: 'Forum', icon: MessageSquare },
+    ...(challengeOver && reportGenerated ? [{ id: 'report', label: 'Report', icon: FileBarChart }] : []),
   ];
 
   return (
@@ -213,9 +228,9 @@ export default function App() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sw-card px-5 py-4">
-              <p className="sw-label">Time left</p>
+              <p className="sw-label">{challengeOver ? 'Result' : 'Time left'}</p>
               <p className="mt-2 font-mono text-[1.35rem] sm:text-2xl font-medium tabular-nums tracking-tight text-volt">
-                {timeLeftStr || `${data.days_remaining}d remaining`}
+                {challengeOver ? 'Circuit complete' : (timeLeftStr || `${data.days_remaining}d remaining`)}
               </p>
             </div>
             <div className="sw-card px-5 py-4">
@@ -232,6 +247,22 @@ export default function App() {
               </p>
             </div>
           </div>
+
+          {challengeOver && (
+            <div className="sw-card px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="sw-kicker mb-1">Final</p>
+                <p className="text-[15px] text-cream leading-relaxed">
+                  {leader ? `${leader.name} takes the circuit` : 'The circuit is over'}
+                  {lastPlaceUser ? ` · ${lastPlaceUser.name} holds the wooden spoon` : ''}
+                </p>
+              </div>
+              <button type="button" onClick={generateReport} className="sw-btn sw-btn-primary text-[13px]">
+                <FileBarChart className="w-3.5 h-3.5" />
+                {reportGenerated ? 'Open report' : 'Generate report'}
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
             <nav className="flex items-end gap-6">
@@ -286,6 +317,7 @@ export default function App() {
               <Leaderboard
                 leaderboard={data.leaderboard}
                 daysRemaining={data.days_remaining}
+                challengeEnded={challengeOver}
                 onSelectUser={(userId) => setSelectedUserId(userId)}
               />
               <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={leader?.name} />
@@ -303,6 +335,13 @@ export default function App() {
             <DiscussionForum
               currentUser={currentUser}
               onOpenAuth={() => setAuthModalOpen(true)}
+            />
+          )}
+
+          {activeTab === 'report' && challengeOver && reportGenerated && (
+            <ChallengeReport
+              data={data}
+              onSelectUser={(userId) => setSelectedUserId(userId)}
             />
           )}
         </main>

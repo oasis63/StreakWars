@@ -403,3 +403,27 @@ html.mode-light .sw-codeblock .text-white {
 html.mode-light .sw-codeblock .hover\:text-white:hover {
   color: #ffffff !important;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .sw-page {
+    background: #fff !important;
+    background-image: none !important;
+    color: #111 !important;
+    min-height: auto;
+  }
+
+  .sw-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  header,
+  footer,
+  .sync-scan-line {
+    display: none !important;
+  }
+}
