@@ -17,7 +17,7 @@ function DiffChip({ n, letter, tone }) {
   );
 }
 
-export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }) {
+export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining, challengeEnded }) {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="sw-card px-8 py-14 text-center text-muted">
@@ -36,7 +36,7 @@ export default function Leaderboard({ leaderboard, onSelectUser, daysRemaining }
           <p className="text-sm text-muted mt-1">Tap a driver for credited problems</p>
         </div>
         <p className="sw-label hidden sm:block">
-          {daysRemaining !== undefined ? `${daysRemaining} days remaining` : 'Live'}
+          {challengeEnded ? 'Final standings' : daysRemaining !== undefined ? `${daysRemaining} days remaining` : 'Live'}
         </p>
       </div>
 
