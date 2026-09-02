@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import { Printer } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Download, Printer } from 'lucide-react';
 import { fmtPts, scoreParts } from './ScoreBreakdowns';
+import { downloadChallengeReportPdf } from '../lib/downloadChallengeReportPdf';
 
 function rankMark(rank) {
   if (rank === 1) return '🥇';
@@ -60,6 +61,8 @@ function MatrixCell({ children, highlight, tone }) {
 }
 
 export default function ChallengeReport({ data, onSelectUser }) {
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState('');
   const field = data?.leaderboard || [];
   const manhattanData = data?.manhattan_data || [];
   const duration = data?.challenge_duration_days || 30;
@@ -119,6 +122,29 @@ export default function ChallengeReport({ data, onSelectUser }) {
     ].filter(Boolean);
   }, [derived]);
 
+  const handleDownloadPdf = () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    setPdfError('');
+    try {
+      downloadChallengeReportPdf({
+        title: data.challenge_title,
+        duration,
+        startDate: data.challenge_start_date,
+        endDate: data.challenge_end_date,
+        stakes: data.party_stakes,
+        derived,
+        rows,
+        notables,
+      });
+    } catch (err) {
+      console.error('PDF download failed:', err);
+      setPdfError('Could not build the PDF. Try Print instead.');
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   if (!field.length) {
     return (
       <div className="sw-card px-8 py-14 text-center text-muted">
@@ -144,11 +170,23 @@ export default function ChallengeReport({ data, onSelectUser }) {
             {data.party_stakes || 'lowest score buys the party'}
           </p>
         </div>
-        <button type="button" onClick={() => window.print()} className="sw-btn text-[13px] no-print">
-          <Printer className="w-3.5 h-3.5" />
-          Print / PDF
-        </button>
+        <div className="flex flex-wrap items-center gap-2 no-print">
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={pdfBusy}
+            className="sw-btn sw-btn-primary text-[13px] disabled:opacity-40"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {pdfBusy ? 'Building PDF' : 'Download PDF'}
+          </button>
+          <button type="button" onClick={() => window.print()} className="sw-btn text-[13px]">
+            <Printer className="w-3.5 h-3.5" />
+            Print
+          </button>
+        </div>
       </div>
+      {pdfError && <p className="text-sm text-coral no-print">{pdfError}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="sw-card px-5 py-4">
