@@ -343,9 +343,9 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
             <button
               type="button"
               onClick={openDeleteModal}
-              className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
+              className="sw-btn w-full py-2.5 border-coral/40 text-coral hover:border-coral inline-flex items-center justify-center gap-1.5"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               Delete challenge
             </button>
           </div>

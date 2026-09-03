@@ -19,6 +19,27 @@ export default function Home({
   const [allowCreate, setAllowCreate] = useState(false);
 
   const canCreate = Boolean(currentUser && (currentUser.is_superadmin || allowCreate));
+  const liveChallenges = challenges.filter((c) => c.status === 'active' || c.status === 'scheduled');
+  const completedChallenges = challenges.filter((c) => c.status === 'completed');
+
+  const circuitCard = (c) => (
+    <button
+      key={c.id}
+      type="button"
+      onClick={() => navigate(`/c/${c.id}`)}
+      className="sw-card px-5 py-4 text-left hover:border-[var(--line-strong)] transition-colors"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold truncate text-cream">{c.title}</p>
+          <p className="text-sm text-muted mt-1">
+            {c.status} · {c.duration_days} days · {c.member_count || 0} players · {c.start_date} → {c.end_date}
+          </p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-muted shrink-0" />
+      </div>
+    </button>
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -66,7 +87,7 @@ export default function Home({
               Circuits
             </h1>
             <p className="mt-3 text-[15px] text-muted max-w-xl leading-relaxed">
-              Open any live challenge. Creating or editing a circuit requires an account.
+              Open any challenge. Creating or editing a circuit requires an account.
             </p>
             <a
               href="https://p2p-chat-production.up.railway.app/"
@@ -140,35 +161,29 @@ export default function Home({
         {loading ? (
           <p className="sw-label">Loading circuits</p>
         ) : (
-          <section className="space-y-3">
-            <p className="sw-label">Active & upcoming</p>
-            {challenges.length === 0 ? (
-              <div className="sw-card px-6 py-10 text-muted text-sm">
-                No live challenges yet.
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {challenges.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => navigate(`/c/${c.id}`)}
-                    className="sw-card px-5 py-4 text-left hover:border-[var(--line-strong)] transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate text-cream">{c.title}</p>
-                        <p className="text-sm text-muted mt-1">
-                          {c.status} · {c.duration_days} days · {c.member_count || 0} players · {c.start_date} → {c.end_date}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-muted shrink-0" />
-                    </div>
-                  </button>
-                ))}
-              </div>
+          <>
+            <section className="space-y-3">
+              <p className="sw-label">Active & upcoming</p>
+              {liveChallenges.length === 0 ? (
+                <div className="sw-card px-6 py-10 text-muted text-sm">
+                  No live challenges yet.
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {liveChallenges.map(circuitCard)}
+                </div>
+              )}
+            </section>
+
+            {completedChallenges.length > 0 && (
+              <section className="space-y-3">
+                <p className="sw-label">Completed</p>
+                <div className="grid gap-3">
+                  {completedChallenges.map(circuitCard)}
+                </div>
+              </section>
             )}
-          </section>
+          </>
         )}
 
         {currentUser && archived.length > 0 && (

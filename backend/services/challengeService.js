@@ -209,8 +209,12 @@ async function listPublicHomeChallenges() {
         SELECT c.*,
             (SELECT COUNT(*) FROM challenge_members m WHERE m.challenge_id = c.id AND m.removed_at IS NULL) AS member_count
         FROM challenges c
-        WHERE c.status IN ('active', 'scheduled')
-        ORDER BY CASE c.status WHEN 'active' THEN 0 ELSE 1 END, c.start_date ASC, c.id DESC
+        WHERE c.status IN ('active', 'scheduled', 'completed')
+        ORDER BY CASE c.status
+            WHEN 'active' THEN 0
+            WHEN 'scheduled' THEN 1
+            ELSE 2
+        END, CASE WHEN c.status = 'completed' THEN c.end_date END DESC, c.start_date ASC, c.id DESC
     `).all();
 }
 
