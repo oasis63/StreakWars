@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getChallengeStartMs, getChallengeEndMs } = require('../services/gameEngineDates');
+const { getChallengeStartMs, getChallengeEndMs, getDayNumber } = require('../services/gameEngineDates');
 
 function inviteCode() {
     return crypto.randomBytes(4).toString('hex');
@@ -13,11 +13,13 @@ function getIstDateString(date = new Date()) {
     return `${value.year}-${value.month}-${value.day}`;
 }
 
-function deriveStatus(startDate, endDate, currentStatus) {
+function deriveStatus(startDate, endDate, currentStatus, durationDays) {
     if (currentStatus === 'archived') return 'archived';
     const now = Date.now();
     if (now < getChallengeStartMs(startDate)) return 'scheduled';
     if (now > getChallengeEndMs(endDate)) return 'completed';
+    const duration = parseInt(durationDays, 10);
+    if (duration > 0 && getDayNumber(now, startDate) > duration) return 'completed';
     return 'active';
 }
 
@@ -316,20 +318,21 @@ async function seedFromLegacyConfig(query, isPg) {
 
     const stakesRow = (await query(`SELECT value FROM app_settings WHERE key = ${isPg ? '$1' : '?'}`, ['party_stakes'])).rows[0];
     const stakes = (stakesRow && stakesRow.value) || 'lowest score buys the party';
-    const status = deriveStatus(cfg.challenge_start_date, cfg.challenge_end_date, 'active');
+    const durationDays = parseInt(cfg.challenge_duration_days, 10) || 30;
+    const status = deriveStatus(cfg.challenge_start_date, cfg.challenge_end_date, 'active', durationDays);
     const code = inviteCode();
 
     if (isPg) {
         await query(
             `INSERT INTO challenges (title, duration_days, start_date, end_date, party_stakes, status, invite_code)
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [cfg.challenge_title, parseInt(cfg.challenge_duration_days, 10) || 30, cfg.challenge_start_date, cfg.challenge_end_date, stakes, status, code]
+            [cfg.challenge_title, durationDays, cfg.challenge_start_date, cfg.challenge_end_date, stakes, status, code]
         );
     } else {
         await query(
             `INSERT INTO challenges (title, duration_days, start_date, end_date, party_stakes, status, invite_code)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [cfg.challenge_title, parseInt(cfg.challenge_duration_days, 10) || 30, cfg.challenge_start_date, cfg.challenge_end_date, stakes, status, code]
+            [cfg.challenge_title, durationDays, cfg.challenge_start_date, cfg.challenge_end_date, stakes, status, code]
         );
     }
 

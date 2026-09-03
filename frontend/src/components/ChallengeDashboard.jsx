@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn, Video, ExternalLink, FileBarChart, ArrowLeft } from 'lucide-react';
+import { Settings as SettingsIcon, RefreshCw, MessageSquare, LogIn, FileBarChart, ArrowLeft } from 'lucide-react';
 import { apiFetch, navigate } from '../lib/session';
 
 import Leaderboard from './Leaderboard';
@@ -139,6 +139,9 @@ export default function ChallengeDashboard({
   const previewReport = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewReport') === '1';
   const challengeOver = Boolean(data.challenge_ended) || timeLeftStr === 'Complete' || previewReport;
   const canAdmin = Boolean(data.can_admin);
+  const displayStatus = challengeOver && data.challenge_status !== 'archived'
+    ? 'completed'
+    : data.challenge_status;
 
   const generateReport = () => {
     const firstOpen = !reportGenerated;
@@ -166,7 +169,7 @@ export default function ChallengeDashboard({
               <button type="button" onClick={() => navigate('/')} className="sw-btn text-xs mb-3">
                 <ArrowLeft className="w-3.5 h-3.5" /> All circuits
               </button>
-              <p className="sw-kicker mb-3">StreakWars · {data.challenge_status}</p>
+              <p className="sw-kicker mb-3">StreakWars · {displayStatus}</p>
               <h1 className="text-[2.15rem] sm:text-[2.75rem] font-semibold tracking-tight leading-[1.05] text-cream">
                 {data.challenge_title || 'StreakWars'}
               </h1>
@@ -260,16 +263,6 @@ export default function ChallengeDashboard({
                   </button>
                 );
               })}
-              <a
-                href="https://p2p-chat-production.up.railway.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative pb-3 text-[15px] font-medium flex items-center gap-1.5 text-muted hover:text-cream transition-colors"
-              >
-                <Video className="w-4 h-4" />
-                Interview
-                <ExternalLink className="w-3 h-3 opacity-70" aria-hidden="true" />
-              </a>
             </nav>
 
             <button
@@ -333,6 +326,7 @@ export default function ChallengeDashboard({
           partyStakes={data.party_stakes}
           challengeStatus={data.challenge_status}
           challengeEnded={challengeOver}
+          isSuperadmin={Boolean(currentUser?.is_superadmin)}
           inviteCode={data.invite_code}
           leaderboard={data.leaderboard}
           onSettingsUpdated={() => fetchData()}

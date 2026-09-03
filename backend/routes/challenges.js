@@ -13,12 +13,13 @@ const {
     removeMember,
     userRole,
     archiveChallenge,
-    deleteArchivedChallenge,
+    deleteChallenge,
     updateChallenge,
     updateMember,
     regenerateInviteCode,
     serializeChallenge
 } = require('../services/challengeService');
+const { canUserCreateChallenge } = require('../services/siteSettings');
 
 function authHeadersUser(req) {
     return req.user || null;
@@ -52,6 +53,9 @@ router.get('/mine', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
     try {
+        if (!(await canUserCreateChallenge(req.user))) {
+            return res.status(403).json({ error: 'Only superadmins can create challenges right now.' });
+        }
         const { challenge_title, title, challenge_duration_days, duration_days, challenge_start_date, start_date, party_stakes, users } = req.body;
         const list = Array.isArray(users) ? users : [];
         for (let i = 0; i < list.length; i++) {
@@ -219,7 +223,7 @@ router.post('/:challengeId/archive', requireAuth, requireChallengeAdmin, async (
 
 router.delete('/:challengeId', requireAuth, requireChallengeAdmin, async (req, res) => {
     try {
-        await deleteArchivedChallenge(req.challengeId);
+        await deleteChallenge(req.challengeId);
         res.json({ success: true, message: 'Challenge and all related data deleted.' });
     } catch (err) {
         res.status(400).json({ error: err.message });
