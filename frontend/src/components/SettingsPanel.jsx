@@ -24,7 +24,7 @@ const THEMES = [
   },
 ];
 
-export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
+export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, challengeEnded = false, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
@@ -42,6 +42,9 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
   const [editHandle, setEditHandle] = useState('');
 
   if (!isOpen) return null;
+
+  const isArchived = challengeStatus === 'archived';
+  const isOver = isArchived || challengeStatus === 'completed' || challengeEnded;
 
   const handleAddUser = async (e) => {
     e.preventDefault();
@@ -169,15 +172,35 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
           </div>
 
           <div className="px-6 py-6 overflow-y-auto flex-1 space-y-8">
+            {error && (
+              <p className="text-sm text-coral border border-coral/30 rounded-lg px-3 py-2">{error}</p>
+            )}
+            {isOver && !isArchived && (
+              <p className="text-sm text-muted border border-[var(--line)] rounded-lg px-3 py-2">
+                This circuit is over. Archive it to freeze it on the home list. After that, the only action left is delete.
+              </p>
+            )}
+            {isArchived && (
+              <p className="text-sm text-muted border border-[var(--line)] rounded-lg px-3 py-2">
+                This circuit is archived. Scores stay frozen. You can delete it, but nothing else can be edited.
+              </p>
+            )}
             <section className="sw-card p-4 space-y-3">
               <p className="sw-label">Circuit details</p>
-              <form onSubmit={handleSaveMeta} className="space-y-2.5">
-                <input className="sw-input text-sm" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
-                <input className="sw-input text-sm" placeholder="Party stakes" value={editStakes} onChange={(e) => setEditStakes(e.target.value)} />
-                <button type="submit" disabled={savingMeta} className="sw-btn w-full py-2 disabled:opacity-50">
-                  {savingMeta ? 'Saving…' : 'Save details'}
-                </button>
-              </form>
+              {isOver ? (
+                <div className="space-y-1">
+                  <p className="font-semibold">{challengeTitle}</p>
+                  <p className="text-sm text-muted">{partyStakes || '—'}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveMeta} className="space-y-2.5">
+                  <input className="sw-input text-sm" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+                  <input className="sw-input text-sm" placeholder="Party stakes" value={editStakes} onChange={(e) => setEditStakes(e.target.value)} />
+                  <button type="submit" disabled={savingMeta} className="sw-btn w-full py-2 disabled:opacity-50">
+                    {savingMeta ? 'Saving…' : 'Save details'}
+                  </button>
+                </form>
+              )}
             </section>
 
             <section className="space-y-3">
@@ -188,7 +211,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
                     key={u.user_id}
                     className="px-3 py-2.5 rounded-xl bg-[var(--panel)] border border-[var(--line)] space-y-2"
                   >
-                    {editingUserId === u.user_id ? (
+                    {editingUserId === u.user_id && !isOver ? (
                       <form onSubmit={handleSaveMember} className="space-y-2">
                         <input className="sw-input text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} />
                         <input className="sw-input text-sm" value={editHandle} onChange={(e) => setEditHandle(e.target.value)} />
@@ -206,18 +229,20 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
                             <p className="text-xs text-muted font-mono truncate">@{u.leetcode_username}</p>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
-                          <button type="button" onClick={() => startEditMember(u)} className="text-xs text-muted hover:text-volt">
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveUser(u.user_id, u.name)}
-                            className="text-xs text-muted hover:text-coral"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                        {!isOver && (
+                          <div className="flex gap-2 shrink-0">
+                            <button type="button" onClick={() => startEditMember(u)} className="text-xs text-muted hover:text-volt">
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveUser(u.user_id, u.name)}
+                              className="text-xs text-muted hover:text-coral"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -225,11 +250,9 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
               </div>
             </section>
 
+            {!isOver && (
             <section className="sw-card p-4 space-y-3">
               <p className="sw-label">Add participant</p>
-              {error && (
-                <p className="text-sm text-coral border border-coral/30 rounded-lg px-3 py-2">{error}</p>
-              )}
               <form onSubmit={handleAddUser} className="space-y-2.5">
                 <input
                   className="sw-input text-sm"
@@ -251,6 +274,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
                 <p className="text-xs text-muted">Joiners can be added only before the start date.</p>
               </form>
             </section>
+            )}
 
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -292,28 +316,30 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
             {inviteCode && (
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs text-muted font-mono">Invite code: {inviteCode}</p>
-                <button
-                  type="button"
-                  className="text-xs text-volt"
-                  onClick={async () => {
-                    try {
-                      await apiFetch(`/api/challenges/${challengeId}/invite`, { method: 'POST' });
-                      if (onSettingsUpdated) onSettingsUpdated();
-                    } catch (err) {
-                      setError(err.message);
-                    }
-                  }}
-                >
-                  New code
-                </button>
+                {!isOver && (
+                  <button
+                    type="button"
+                    className="text-xs text-volt"
+                    onClick={async () => {
+                      try {
+                        await apiFetch(`/api/challenges/${challengeId}/invite`, { method: 'POST' });
+                        if (onSettingsUpdated) onSettingsUpdated();
+                      } catch (err) {
+                        setError(err.message);
+                      }
+                    }}
+                  >
+                    New code
+                  </button>
+                )}
               </div>
             )}
-            {(challengeStatus === 'completed') && (
-              <button type="button" onClick={handleArchive} className="text-xs text-muted hover:text-volt">
+            {isOver && !isArchived && (
+              <button type="button" onClick={handleArchive} className="sw-btn w-full py-2.5">
                 Archive challenge
               </button>
             )}
-            {challengeStatus === 'archived' ? (
+            {isArchived ? (
               <button
                 type="button"
                 onClick={openDeleteModal}

@@ -186,6 +186,7 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
   const [stakes, setStakes] = useState(challenge.party_stakes || '');
   const [newName, setNewName] = useState('');
   const [newHandle, setNewHandle] = useState('');
+  const locked = challenge.status === 'completed' || challenge.status === 'archived';
 
   useEffect(() => {
     setTitle(challenge.title);
@@ -225,6 +226,14 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
 
       {open && (
         <div className="space-y-3 border-t border-[var(--line)] pt-3">
+          {locked ? (
+            <p className="text-xs text-muted">
+              {challenge.status === 'archived'
+                ? 'Archived circuits cannot be edited. Delete is the only remaining action.'
+                : 'This circuit is complete. Archive it — then you can delete it. No other edits.'}
+            </p>
+          ) : (
+            <>
           <form
             className="grid sm:grid-cols-2 gap-2"
             onSubmit={(e) => {
@@ -248,11 +257,14 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
               </button>
             </div>
           )}
+            </>
+          )}
 
           <p className="sw-label">Players</p>
           {(challenge.members || []).map((m) => (
             <div key={m.user_id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="truncate">{m.name} · @{m.leetcode_username} · {m.role}</span>
+              {!locked && (
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -272,9 +284,11 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
                   Remove
                 </button>
               </div>
+              )}
             </div>
           ))}
 
+          {!locked && (
           <form
             className="grid sm:grid-cols-2 gap-2"
             onSubmit={(e) => {
@@ -293,6 +307,7 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
             <input className="sw-input text-sm" placeholder="LeetCode username" value={newHandle} onChange={(e) => setNewHandle(e.target.value)} required />
             <button type="submit" className="sw-btn text-xs sm:col-span-2">Add player</button>
           </form>
+          )}
         </div>
       )}
     </div>
