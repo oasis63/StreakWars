@@ -4,6 +4,8 @@ process.env.TZ = process.env.TZ || 'Asia/Kolkata';
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
 
 const { initDb } = require('./db/db');

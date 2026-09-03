@@ -4,6 +4,7 @@ const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
 const { migrateMultiChallenge } = require('./migrateMultiChallenge');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 require('dotenv').config();
 
 let usePostgres = false;
@@ -22,6 +23,11 @@ function convertSqlForPg(sql) {
     return converted;
 }
 
+function pgNeedsSsl(dbUrl) {
+    if (!dbUrl) return Boolean(process.env.PGSSL);
+    return /supabase\.co|render\.com|oregon-postgres|sslmode=require/i.test(dbUrl);
+}
+
 /**
  * Initialize database connection (PostgreSQL via env or SQLite fallback)
  */
@@ -33,8 +39,8 @@ async function initDb() {
     // 1. Configure PostgreSQL pool if environment URL or host is defined
     const poolConfig = dbUrl ? {
         connectionString: dbUrl,
-        ssl: dbUrl.includes('render.com') || dbUrl.includes('oregon-postgres') ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 10000
+        ssl: pgNeedsSsl(dbUrl) ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 15000
     } : {
         host: process.env.PGHOST || 'localhost',
         port: parseInt(process.env.PGPORT, 10) || 5432,
