@@ -7,7 +7,7 @@ const {
     consumeFreshCapacity,
     getSubmissionWindowWarning
 } = require('./scoring');
-const { getChallengeStartMs, getDayNumber } = require('./gameEngineDates');
+const { getChallengeStartMs, getDayNumber, getChallengeEndMs } = require('./gameEngineDates');
 
 async function getChallengeById(id) {
     const { getChallengeById: load } = require('./challengeService');
@@ -400,7 +400,10 @@ async function buildLeaderboardPayload(challengeId) {
     const durationDays = parseInt(challenge.duration_days, 10) || 30;
     const currentDay = await getCurrentChallengeDay(challengeId);
     const daysRemaining = Math.max(0, durationDays - currentDay + 1);
-    const challengeEnded = challenge.status === 'completed' || challenge.status === 'archived' || currentDay > durationDays;
+    const challengeEnded = challenge.status === 'completed'
+        || challenge.status === 'archived'
+        || currentDay > durationDays
+        || Date.now() > getChallengeEndMs(challenge.end_date);
 
     const usersWithStats = await db.prepare(`
         SELECT

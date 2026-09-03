@@ -20,6 +20,16 @@ function challengeIsLive(status) {
     return status === 'scheduled' || status === 'active';
 }
 
+function assertChallengeMutable(challenge) {
+    if (!challenge) throw new Error('Challenge not found');
+    if (challenge.status === 'archived') {
+        throw new Error('This circuit is archived. It can only be deleted.');
+    }
+    if (challenge.status === 'completed') {
+        throw new Error('This circuit is over. Archive it, then you can delete it.');
+    }
+}
+
 async function refreshChallengeRow(challenge) {
     if (!challenge) return challenge;
     const next = deriveStatus(challenge.start_date, challenge.end_date, challenge.status);
@@ -85,7 +95,8 @@ async function addMember({ challengeId, name, leetcodeUsername, role = 'particip
     const db = getDb();
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge not found');
-    if (!allowAfterStart && challenge.status !== 'scheduled' && Date.now() >= getChallengeStartMs(challenge.start_date)) {
+    assertChallengeMutable(challenge);
+    if (!allowAfterStart && Date.now() >= getChallengeStartMs(challenge.start_date)) {
         throw new Error('Participants cannot be added once a challenge has started.');
     }
 
@@ -157,6 +168,8 @@ async function captureMemberBaseline(challenge, userId, leetcodeUsername) {
 }
 
 async function removeMember(challengeId, userId) {
+    const challenge = await getChallengeById(challengeId);
+    assertChallengeMutable(challenge);
     const db = getDb();
     await db.prepare(`
         UPDATE challenge_members SET removed_at = CURRENT_TIMESTAMP
@@ -285,7 +298,7 @@ async function archiveChallenge(challengeId, { force = false } = {}) {
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge not found');
     if (!force && challenge.status !== 'completed' && challenge.status !== 'archived') {
-        throw new Error('Only a completed challenge can be archived.');
+        throw new Error('Archive is available after the circuit is complete.');
     }
     const db = getDb();
     await db.prepare(`UPDATE challenges SET status = 'archived' WHERE id = ?`).run(challengeId);
@@ -295,6 +308,7 @@ async function archiveChallenge(challengeId, { force = false } = {}) {
 async function updateChallenge(challengeId, { title, party_stakes }) {
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge not found');
+    assertChallengeMutable(challenge);
     const db = getDb();
     const nextTitle = title != null ? String(title).trim() : challenge.title;
     const nextStakes = party_stakes != null ? String(party_stakes).trim() : challenge.party_stakes;
@@ -304,6 +318,8 @@ async function updateChallenge(challengeId, { title, party_stakes }) {
 }
 
 async function updateMember(challengeId, userId, { name, leetcode_username }) {
+    const challenge = await getChallengeById(challengeId);
+    assertChallengeMutable(challenge);
     const db = getDb();
     const member = await db.prepare(`
         SELECT * FROM challenge_members WHERE challenge_id = ? AND user_id = ? AND removed_at IS NULL
@@ -337,6 +353,7 @@ async function deleteArchivedChallenge(challengeId) {
 async function regenerateInviteCode(challengeId) {
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge not found');
+    assertChallengeMutable(challenge);
     const db = getDb();
     const code = inviteCode();
     await db.prepare(`UPDATE challenges SET invite_code = ? WHERE id = ?`).run(code, challengeId);
@@ -345,6 +362,8 @@ async function regenerateInviteCode(challengeId) {
 
 async function setMemberRole(challengeId, userId, role) {
     if (!['admin', 'participant'].includes(role)) throw new Error('Role must be admin or participant.');
+    const challenge = await getChallengeById(challengeId);
+    assertChallengeMutable(challenge);
     const db = getDb();
     const member = await db.prepare(`
         SELECT * FROM challenge_members WHERE challenge_id = ? AND user_id = ? AND removed_at IS NULL

@@ -332,6 +332,7 @@ export default function ChallengeDashboard({
           challengeTitle={data.challenge_title}
           partyStakes={data.party_stakes}
           challengeStatus={data.challenge_status}
+          challengeEnded={challengeOver}
           inviteCode={data.invite_code}
           leaderboard={data.leaderboard}
           onSettingsUpdated={() => fetchData()}

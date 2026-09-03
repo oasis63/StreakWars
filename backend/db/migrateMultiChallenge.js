@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { getChallengeStartMs, getChallengeEndMs } = require('../services/gameEngineDates');
 
 function inviteCode() {
     return crypto.randomBytes(4).toString('hex');
@@ -14,9 +15,9 @@ function getIstDateString(date = new Date()) {
 
 function deriveStatus(startDate, endDate, currentStatus) {
     if (currentStatus === 'archived') return 'archived';
-    const today = getIstDateString();
-    if (today < startDate) return 'scheduled';
-    if (today > endDate) return 'completed';
+    const now = Date.now();
+    if (now < getChallengeStartMs(startDate)) return 'scheduled';
+    if (now > getChallengeEndMs(endDate)) return 'completed';
     return 'active';
 }
 
