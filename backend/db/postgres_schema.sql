@@ -1,4 +1,3 @@
--- Active participants & registered global users
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -12,17 +11,44 @@ CREATE TABLE IF NOT EXISTS users (
     emoji VARCHAR(50) DEFAULT '👤',
     car_emoji VARCHAR(50) DEFAULT '🏎️',
     is_participant INTEGER DEFAULT 1,
+    is_superadmin INTEGER DEFAULT 0,
     is_deleted INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Global config (challenge_title, challenge_duration_days, challenge_start_date, challenge_end_date)
+CREATE TABLE IF NOT EXISTS challenges (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    duration_days INTEGER NOT NULL DEFAULT 30,
+    start_date VARCHAR(10) NOT NULL,
+    end_date VARCHAR(10) NOT NULL,
+    party_stakes TEXT NOT NULL DEFAULT 'lowest score buys the party',
+    created_by INTEGER REFERENCES users(id),
+    status VARCHAR(32) NOT NULL DEFAULT 'scheduled',
+    invite_code VARCHAR(32) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS challenge_members (
+    id SERIAL PRIMARY KEY,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    role VARCHAR(32) NOT NULL DEFAULT 'participant',
+    name VARCHAR(255) NOT NULL,
+    leetcode_username VARCHAR(255) NOT NULL,
+    color VARCHAR(50) NOT NULL DEFAULT '#6366f1',
+    emoji VARCHAR(50) DEFAULT '👤',
+    car_emoji VARCHAR(50) DEFAULT '🏎️',
+    removed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(challenge_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS config (
     key VARCHAR(255) PRIMARY KEY,
     value TEXT NOT NULL
 );
 
--- Raw LeetCode aggregate snapshots (polled hourly)
 CREATE TABLE IF NOT EXISTS snapshots (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -32,19 +58,20 @@ CREATE TABLE IF NOT EXISTS snapshots (
     total_hard INTEGER NOT NULL DEFAULT 0
 );
 
--- Immutable aggregate totals captured before the active challenge begins.
 CREATE TABLE IF NOT EXISTS challenge_baselines (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     challenge_start_date VARCHAR(10) NOT NULL,
     captured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_easy INTEGER NOT NULL DEFAULT 0,
     total_medium INTEGER NOT NULL DEFAULT 0,
-    total_hard INTEGER NOT NULL DEFAULT 0
+    total_hard INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (challenge_id, user_id)
 );
 
--- Computed scores & game state -- rebuilt on every sync by gameEngine
 CREATE TABLE IF NOT EXISTS user_stats (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     easy_solved INTEGER DEFAULT 0,
     medium_solved INTEGER DEFAULT 0,
     hard_solved INTEGER DEFAULT 0,
@@ -63,12 +90,13 @@ CREATE TABLE IF NOT EXISTS user_stats (
     fresh_pts DOUBLE PRECISION DEFAULT 0,
     resubmit_pts DOUBLE PRECISION DEFAULT 0,
     sync_status VARCHAR(50) DEFAULT 'verified',
-    sync_warning TEXT DEFAULT ''
+    sync_warning TEXT DEFAULT '',
+    PRIMARY KEY (challenge_id, user_id)
 );
 
--- Per-submission credit log (one row per unique problem slug per user)
 CREATE TABLE IF NOT EXISTS credited_problems (
     id SERIAL PRIMARY KEY,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title_slug VARCHAR(255) NOT NULL,
     difficulty VARCHAR(50) NOT NULL,
@@ -76,42 +104,39 @@ CREATE TABLE IF NOT EXISTS credited_problems (
     points_awarded DOUBLE PRECISION NOT NULL,
     day_number INTEGER NOT NULL,
     credited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_user_problem UNIQUE(user_id, title_slug)
+    CONSTRAINT unique_challenge_user_problem UNIQUE(challenge_id, user_id, title_slug)
 );
 
--- Dedup guard - prevents re-processing a submission across sync runs
 CREATE TABLE IF NOT EXISTS processed_submissions (
     id SERIAL PRIMARY KEY,
+    challenge_id INTEGER NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     submission_id VARCHAR(255) NOT NULL,
     title_slug VARCHAR(255) NOT NULL,
     processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_user_submission UNIQUE(user_id, submission_id)
+    CONSTRAINT unique_challenge_user_submission UNIQUE(challenge_id, user_id, submission_id)
 );
 
--- Problem difficulty cache (avoids re-fetching LeetCode for known slugs)
 CREATE TABLE IF NOT EXISTS problem_cache (
     title_slug VARCHAR(255) PRIMARY KEY,
     difficulty VARCHAR(50) NOT NULL
 );
 
--- Soft-config editable at runtime (party stakes text, etc.)
 CREATE TABLE IF NOT EXISTS app_settings (
     key VARCHAR(255) PRIMARY KEY,
     value TEXT NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Audit Log of app_settings before any change
 CREATE TABLE IF NOT EXISTS scoring_config_history (
     id SERIAL PRIMARY KEY,
     snapshot TEXT NOT NULL,
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Discussion Forum Posts & Replies
 CREATE TABLE IF NOT EXISTS forum_posts (
     id SERIAL PRIMARY KEY,
+    challenge_id INTEGER REFERENCES challenges(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     title VARCHAR(255) DEFAULT '',
     category VARCHAR(100) DEFAULT 'General',

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { KeyRound, User, UserPlus, LogIn, X, Sparkles, Check } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { saveSession } from '../lib/session';
 
 const AVATAR_OPTIONS = ['👤', '🐱‍💻', '🏎️', '⚡', '🔮', '🚀', '🥷', '🤖', '🦁', '🐉', '🛸', '🧠', '💻', '🦊', '🦅'];
 const COLOR_OPTIONS = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#14b8a6', '#3b82f6'];
@@ -52,6 +53,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       if (!res.ok) throw new Error(data.error || 'Login failed.');
 
       localStorage.setItem('streakwars_user', JSON.stringify(data.user));
+      saveSession(data.user);
       onAuthSuccess(data.user);
       onClose();
     } catch (err) {
@@ -96,6 +98,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       if (!res.ok) throw new Error(data.error || 'Registration failed.');
 
       localStorage.setItem('streakwars_user', JSON.stringify(data.user));
+      saveSession(data.user);
       onAuthSuccess(data.user);
       onClose();
     } catch (err) {

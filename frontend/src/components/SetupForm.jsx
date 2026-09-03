@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { API_BASE_URL } from '../config';
+import { apiFetch } from '../lib/session';
 
-export default function SetupForm({ onSetupComplete }) {
+export default function SetupForm({ onSetupComplete, onCancel }) {
   const [title, setTitle] = useState('4Coders1Bill');
   const [duration, setDuration] = useState(30);
   const [startDate, setStartDate] = useState(() => {
@@ -37,29 +37,24 @@ export default function SetupForm({ onSetupComplete }) {
       setError('Please enter a challenge title.');
       return;
     }
-    if (!users.length || users.some((u) => !u.name.trim() || !u.leetcode_username.trim())) {
-      setError('Add at least one participant with a name and LeetCode username.');
-      return;
-    }
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/config/setup`, {
+      const data = await apiFetch('/api/challenges', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challenge_title: title.trim(),
           challenge_duration_days: duration,
           challenge_start_date: startDate,
           party_stakes: stakes.trim(),
-          users: users.map((u) => ({
-            name: u.name.trim(),
-            leetcode_username: u.leetcode_username.trim(),
-          })),
+          users: users
+            .filter((u) => u.name.trim() && u.leetcode_username.trim())
+            .map((u) => ({
+              name: u.name.trim(),
+              leetcode_username: u.leetcode_username.trim(),
+            })),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to initialize challenge.');
       onSetupComplete(data);
     } catch (err) {
       setError(err.message);
@@ -72,6 +67,9 @@ export default function SetupForm({ onSetupComplete }) {
     <div className="sw-page flex items-center justify-center p-4 py-16">
       <div className="max-w-xl w-full">
         <p className="sw-kicker mb-4">StreakWars</p>
+        {onCancel && (
+          <button type="button" className="sw-btn text-xs mb-4" onClick={onCancel}>Cancel</button>
+        )}
         <h1 className="text-4xl font-semibold tracking-tight leading-none mb-3">Open a circuit</h1>
         <p className="text-muted text-[15px] mb-8 leading-relaxed">
           Pick a future start date so each driver&apos;s LeetCode baseline can be captured fairly.
