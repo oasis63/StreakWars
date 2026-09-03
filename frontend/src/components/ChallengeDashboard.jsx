@@ -214,9 +214,9 @@ export default function ChallengeDashboard({
               </p>
             </div>
             <div className="sw-card px-5 py-4">
-              <p className="sw-label">{lastPlaceUser ? 'Wooden spoon' : 'Field'}</p>
-              <p className={`mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase ${lastPlaceUser ? 'text-coral' : ''}`}>
-                {lastPlaceUser ? lastPlaceUser.name : `${data.leaderboard?.length || 0} players`}
+              <p className="sw-label">Champion</p>
+              <p className={`mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase ${leader ? 'text-volt' : ''}`}>
+                {leader ? leader.name : `${data.leaderboard?.length || 0} players`}
               </p>
             </div>
           </div>
