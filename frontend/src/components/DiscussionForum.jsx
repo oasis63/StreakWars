@@ -7,6 +7,7 @@ import {
 import RichTextEditor from './RichTextEditor';
 import MarkdownRenderer from './MarkdownRenderer';
 import { API_BASE_URL } from '../config';
+import { useConfirm } from './ConfirmDialog';
 
 const CATEGORIES = [
   { id: 'all', name: 'All Topics', icon: '💬' },
@@ -53,6 +54,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth, challengeId }
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'comments' | 'popular'
+  const [confirm, confirmDialog] = useConfirm();
 
   // Helper to safely parse JSON responses
   const safeJsonFetch = async (url, options) => {
@@ -228,7 +230,15 @@ export default function DiscussionForum({ currentUser, onOpenAuth, challengeId }
 
   // Handle deleting any post or comment (anyone can delete)
   const handleDeletePost = async (postId, isTopic = false) => {
-    if (!window.confirm(`Are you sure you want to delete this ${isTopic ? 'entire discussion thread' : 'comment'}?`)) return;
+    const ok = await confirm({
+      title: isTopic ? 'Delete this thread?' : 'Delete this comment?',
+      message: isTopic
+        ? 'This removes the entire discussion thread.'
+        : 'This comment will be removed.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       await safeJsonFetch(`${API_BASE_URL}/api/forum/${postId}`, {
@@ -286,6 +296,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth, challengeId }
   const activeThread = topics.find(t => t.id === activeThreadId);
 
   return (
+    <>
     <div className="hud-card p-5 sm:p-7 space-y-6 font-['Inter',sans-serif]">
       {/* Forum Main Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] pb-5">
@@ -943,5 +954,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth, challengeId }
         </div>
       )}
     </div>
+    {confirmDialog}
+    </>
   );
 }

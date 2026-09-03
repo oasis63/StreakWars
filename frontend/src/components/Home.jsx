@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LogIn, Plus, Shield, ArrowRight, KeyRound, Video, ExternalLink } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import Footer from './Footer';
+import AccountMenu from './AccountMenu';
 import { apiFetch, navigate } from '../lib/session';
 
 export default function Home({
@@ -79,7 +80,7 @@ export default function Home({
 
   return (
     <div className={`sw-page ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 flex-1 w-full">
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="sw-kicker mb-3">StreakWars</p>
@@ -102,18 +103,7 @@ export default function Home({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {currentUser ? (
-              <button
-                onClick={onLogout}
-                className="sw-btn pl-1.5 pr-3 py-1"
-              >
-                <span
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
-                  style={{ backgroundColor: currentUser.avatar_color || '#c9a86c', color: '#14120c' }}
-                >
-                  {currentUser.avatar_emoji || '•'}
-                </span>
-                <span className="hidden sm:inline">{currentUser.display_name}</span>
-              </button>
+              <AccountMenu currentUser={currentUser} onLogout={onLogout} canCreate={canCreate} />
             ) : (
               <button onClick={onOpenAuth} className="sw-btn">
                 <LogIn className="w-4 h-4" />

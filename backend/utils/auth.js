@@ -39,6 +39,7 @@ function publicUser(user) {
     return {
         id: user.id,
         username: `@${handle}`,
+        leetcode_username: user.leetcode_username || handle,
         display_name: user.display_name || user.name,
         avatar_emoji: user.avatar_emoji || user.emoji || '👤',
         avatar_color: user.avatar_color || user.color || '#6366f1',

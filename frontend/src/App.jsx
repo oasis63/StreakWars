@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Home from './components/Home';
 import ChallengeDashboard from './components/ChallengeDashboard';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
+import AccountPage from './components/AccountPage';
 import SetupForm from './components/SetupForm';
 import AuthModal from './components/AuthModal';
+import { useConfirm } from './components/ConfirmDialog';
 import { loadSessionUser, saveSession, parseRoute, navigate, apiFetch } from './lib/session';
 
 export default function App() {
@@ -12,6 +14,7 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('streakwars_theme') || 'green');
   const [colorMode, setColorMode] = useState(() => localStorage.getItem('streakwars_color_mode') || 'dark');
+  const [confirm, confirmDialog] = useConfirm();
 
   useEffect(() => {
     const onPop = () => setRoute(parseRoute());
@@ -32,10 +35,17 @@ export default function App() {
     setCurrentUser(user);
   };
 
-  const onLogout = () => {
-    if (window.confirm(`Log out from ${currentUser?.username || 'this account'}?`)) {
+  const onLogout = async () => {
+    const ok = await confirm({
+      title: 'Log out?',
+      message: `Log out from @${String(currentUser?.username || currentUser?.display_name || 'this account').replace(/^@/, '')}?`,
+      confirmLabel: 'Log out',
+      danger: true,
+    });
+    if (ok) {
       saveSession(null);
       setCurrentUser(null);
+      navigate('/');
     }
   };
 
@@ -63,6 +73,8 @@ export default function App() {
     page = (
       <JoinPage code={route.code} currentUser={currentUser} onOpenAuth={() => setAuthModalOpen(true)} colorMode={colorMode} />
     );
+  } else if (route.name === 'account') {
+    page = <AccountPage {...shell} />;
   } else if (route.name === 'challenge') {
     page = <ChallengeDashboard challengeId={route.id} {...shell} />;
   } else {
@@ -77,6 +89,7 @@ export default function App() {
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={onAuthSuccess}
       />
+      {confirmDialog}
     </>
   );
 }

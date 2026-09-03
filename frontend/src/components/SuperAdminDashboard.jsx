@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Shield, ArrowLeft, Search, Plus } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import Footer from './Footer';
 import { apiFetch, navigate } from '../lib/session';
+import { useConfirm } from './ConfirmDialog';
 
 export default function SuperAdminDashboard({ currentUser, colorMode, onColorModeChange }) {
   const [data, setData] = useState(null);
@@ -10,6 +12,7 @@ export default function SuperAdminDashboard({ currentUser, colorMode, onColorMod
   const [busy, setBusy] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
 
   const load = async () => {
     const d = await apiFetch('/api/superadmin/overview');
@@ -52,7 +55,7 @@ export default function SuperAdminDashboard({ currentUser, colorMode, onColorMod
 
   return (
     <div className={`sw-page ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 flex-1 w-full">
         <div className="flex items-start justify-between gap-4">
           <div>
             <button type="button" onClick={() => navigate('/')} className="sw-btn text-sm mb-4">
@@ -135,6 +138,7 @@ export default function SuperAdminDashboard({ currentUser, colorMode, onColorMod
                 onToggle={() => setOpenId(openId === c.id ? null : c.id)}
                 busy={busy}
                 run={run}
+                confirm={confirm}
               />
             ))}
           </div>
@@ -149,6 +153,8 @@ export default function SuperAdminDashboard({ currentUser, colorMode, onColorMod
           </div>
         </section>
       </div>
+      <Footer />
+      {confirmDialog}
     </div>
   );
 }
@@ -199,7 +205,7 @@ function CreateChallengeForm({ onCreated, onError }) {
   );
 }
 
-function ChallengeCard({ challenge, open, onToggle, busy, run }) {
+function ChallengeCard({ challenge, open, onToggle, busy, run, confirm }) {
   const [title, setTitle] = useState(challenge.title);
   const [stakes, setStakes] = useState(challenge.party_stakes || '');
   const [newName, setNewName] = useState('');
@@ -229,8 +235,14 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
             type="button"
             className="sw-btn text-xs text-coral"
             disabled={busy === `d${challenge.id}`}
-            onClick={() => {
-              if (window.confirm(`Permanently delete “${challenge.title}” and all of its data?`)) {
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'Delete this circuit?',
+                message: `Permanently delete “${challenge.title}” and all of its data? This cannot be undone.`,
+                confirmLabel: 'Delete',
+                danger: true,
+              });
+              if (ok) {
                 return run(`d${challenge.id}`, () => apiFetch(`/api/superadmin/challenges/${challenge.id}`, { method: 'DELETE' }));
               }
             }}
