@@ -3,13 +3,23 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { validateUsername } = require('../services/leetcodeApi');
 const { createChallenge, serializeChallenge } = require('../services/challengeService');
+const { allowUserChallengeCreate } = require('../services/siteSettings');
 
 router.get('/', async (req, res) => {
-    res.json({ setup_required: false, multi_challenge: true });
+    try {
+        const allowCreate = await allowUserChallengeCreate();
+        res.json({ setup_required: false, multi_challenge: true, allow_user_challenge_create: allowCreate });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.post('/setup', requireAuth, async (req, res) => {
     try {
+        const { canUserCreateChallenge } = require('../services/siteSettings');
+        if (!(await canUserCreateChallenge(req.user))) {
+            return res.status(403).json({ error: 'Only superadmins can create challenges right now.' });
+        }
         const { challenge_title, challenge_duration_days, challenge_start_date, party_stakes, users } = req.body;
         const list = Array.isArray(users) ? users : [];
         for (let i = 0; i < list.length; i++) {

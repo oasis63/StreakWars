@@ -24,7 +24,7 @@ const THEMES = [
   },
 ];
 
-export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, challengeEnded = false, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
+export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, challengeEnded = false, isSuperadmin = false, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
@@ -45,6 +45,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
 
   const isArchived = challengeStatus === 'archived';
   const isOver = isArchived || challengeStatus === 'completed' || challengeEnded;
+  const canArchive = !isArchived && (isOver || isSuperadmin);
 
   const handleAddUser = async (e) => {
     e.preventDefault();
@@ -334,23 +335,19 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
                 )}
               </div>
             )}
-            {isOver && !isArchived && (
+            {canArchive && (
               <button type="button" onClick={handleArchive} className="sw-btn w-full py-2.5">
                 Archive challenge
               </button>
             )}
-            {isArchived ? (
-              <button
-                type="button"
-                onClick={openDeleteModal}
-                className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Delete archived challenge
-              </button>
-            ) : (
-              <p className="text-[11px] text-muted">Archive first to delete this circuit and all of its data.</p>
-            )}
+            <button
+              type="button"
+              onClick={openDeleteModal}
+              className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete challenge
+            </button>
           </div>
         </aside>
       </div>

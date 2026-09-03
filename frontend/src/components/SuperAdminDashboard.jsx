@@ -83,6 +83,24 @@ export default function SuperAdminDashboard({ currentUser, colorMode, onColorMod
           </div>
         )}
 
+        <div className="sw-card px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">Allow logged-in users to create challenges</p>
+            <p className="text-sm text-muted mt-1">Off by default. Superadmins can always create.</p>
+          </div>
+          <button
+            type="button"
+            className={`sw-btn ${data?.settings?.allow_user_challenge_create ? 'sw-btn-primary' : ''}`}
+            disabled={busy === 'allow-create'}
+            onClick={() => run('allow-create', () => apiFetch('/api/superadmin/settings/allow-create', {
+              method: 'POST',
+              body: JSON.stringify({ allow_user_challenge_create: !data?.settings?.allow_user_challenge_create }),
+            }))}
+          >
+            {data?.settings?.allow_user_challenge_create ? 'Enabled' : 'Disabled'}
+          </button>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <button type="button" className="sw-btn sw-btn-primary" onClick={() => setShowCreate((v) => !v)}>
             <Plus className="w-4 h-4" /> Create challenge
@@ -201,26 +219,24 @@ function ChallengeCard({ challenge, open, onToggle, busy, run }) {
           <p className="text-xs text-muted">{challenge.status} · {challenge.member_count} players · {challenge.start_date} → {challenge.end_date}</p>
         </button>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="sw-btn text-xs" onClick={() => navigate(`/c/${challenge.id}`)}>Open</button>
+          <button type="button" className="sw-btn sw-btn-primary" onClick={() => navigate(`/c/${challenge.id}`)}>Open</button>
           {challenge.status !== 'archived' && (
             <button type="button" className="sw-btn text-xs" disabled={busy === `a${challenge.id}`} onClick={() => run(`a${challenge.id}`, () => apiFetch(`/api/superadmin/challenges/${challenge.id}/archive`, { method: 'POST' }))}>
               Archive
             </button>
           )}
-          {challenge.status === 'archived' && (
-            <button
-              type="button"
-              className="sw-btn text-xs text-coral"
-              disabled={busy === `d${challenge.id}`}
-              onClick={() => {
-                if (window.confirm(`Permanently delete “${challenge.title}” and all of its data?`)) {
-                  return run(`d${challenge.id}`, () => apiFetch(`/api/superadmin/challenges/${challenge.id}`, { method: 'DELETE' }));
-                }
-              }}
-            >
-              Delete
-            </button>
-          )}
+          <button
+            type="button"
+            className="sw-btn text-xs text-coral"
+            disabled={busy === `d${challenge.id}`}
+            onClick={() => {
+              if (window.confirm(`Permanently delete “${challenge.title}” and all of its data?`)) {
+                return run(`d${challenge.id}`, () => apiFetch(`/api/superadmin/challenges/${challenge.id}`, { method: 'DELETE' }));
+              }
+            }}
+          >
+            Delete
+          </button>
         </div>
       </div>
 

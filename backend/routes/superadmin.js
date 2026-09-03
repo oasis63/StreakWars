@@ -4,11 +4,12 @@ const { getDb } = require('../db/db');
 const { requireAuth, requireSuperadmin } = require('../middleware/auth');
 const {
     archiveChallenge,
-    deleteArchivedChallenge,
+    deleteChallenge,
     setMemberRole,
     serializeChallenge,
     refreshAllChallengeStatuses
 } = require('../services/challengeService');
+const { allowUserChallengeCreate, setAllowUserChallengeCreate } = require('../services/siteSettings');
 
 router.use(requireAuth, requireSuperadmin);
 
@@ -50,6 +51,9 @@ router.get('/overview', async (req, res) => {
         }
         res.json({
             counts,
+            settings: {
+                allow_user_challenge_create: await allowUserChallengeCreate()
+            },
             users,
             challenges: challenges.map((c) => serializeChallenge(c, {
                 member_count: parseInt(c.member_count, 10) || 0,
@@ -111,9 +115,18 @@ router.post('/challenges/:challengeId/archive', async (req, res) => {
     }
 });
 
+router.post('/settings/allow-create', async (req, res) => {
+    try {
+        const enabled = await setAllowUserChallengeCreate(Boolean(req.body.allow_user_challenge_create));
+        res.json({ success: true, allow_user_challenge_create: enabled });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.delete('/challenges/:challengeId', async (req, res) => {
     try {
-        await deleteArchivedChallenge(parseInt(req.params.challengeId, 10));
+        await deleteChallenge(parseInt(req.params.challengeId, 10));
         res.json({ success: true });
     } catch (err) {
         res.status(400).json({ error: err.message });

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db/db');
 const { requireAuth, requireChallengeAdmin } = require('../middleware/auth');
-const { addMember, removeMember, deleteArchivedChallenge, archiveChallenge, getChallengeById } = require('../services/challengeService');
+const { addMember, removeMember, deleteChallenge } = require('../services/challengeService');
 const { validateUsername } = require('../services/leetcodeApi');
 
 router.post('/users', requireAuth, async (req, res) => {
@@ -53,14 +53,7 @@ router.post('/delete-challenge', requireAuth, async (req, res) => {
         req.params.challengeId = String(challengeId);
         req.challengeId = challengeId;
         return requireChallengeAdmin(req, res, async () => {
-            const challenge = await getChallengeById(challengeId);
-            if (challenge.status !== 'archived') {
-                await archiveChallenge(challengeId, { force: Boolean(req.user.is_superadmin) });
-                return res.status(400).json({
-                    error: 'Challenge was archived first. Confirm delete again to permanently remove its data.'
-                });
-            }
-            await deleteArchivedChallenge(challengeId);
+            await deleteChallenge(challengeId);
             res.json({ success: true, message: 'Challenge deleted' });
         });
     } catch (err) {

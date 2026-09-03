@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LogIn, Plus, Shield, ArrowRight, KeyRound } from 'lucide-react';
+import { LogIn, Plus, Shield, ArrowRight, KeyRound, Video, ExternalLink } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import Footer from './Footer';
 import { apiFetch, navigate } from '../lib/session';
@@ -16,12 +16,19 @@ export default function Home({
   const [loading, setLoading] = useState(true);
   const [invite, setInvite] = useState('');
   const [error, setError] = useState(null);
+  const [allowCreate, setAllowCreate] = useState(false);
+
+  const canCreate = Boolean(currentUser && (currentUser.is_superadmin || allowCreate));
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const live = await apiFetch('/api/challenges');
+        const [live, siteConfig] = await Promise.all([
+          apiFetch('/api/challenges'),
+          apiFetch('/api/config').catch(() => ({ allow_user_challenge_create: false })),
+        ]);
+        setAllowCreate(Boolean(siteConfig.allow_user_challenge_create));
         let mine = { challenges: [] };
         if (currentUser) {
           try {
@@ -61,6 +68,16 @@ export default function Home({
             <p className="mt-3 text-[15px] text-muted max-w-xl leading-relaxed">
               Open any live challenge. Creating or editing a circuit requires an account.
             </p>
+            <a
+              href="https://p2p-chat-production.up.railway.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-sm text-muted hover:text-cream transition-colors"
+            >
+              <Video className="w-4 h-4" />
+              Interview room
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" aria-hidden="true" />
+            </a>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {currentUser ? (
@@ -92,12 +109,12 @@ export default function Home({
         </header>
 
         <div className="flex flex-wrap gap-2">
-          {currentUser ? (
+          {canCreate ? (
             <button onClick={() => navigate('/create')} className="sw-btn sw-btn-primary">
               <Plus className="w-4 h-4" />
               Create challenge
             </button>
-          ) : (
+          ) : currentUser ? null : (
             <button onClick={onOpenAuth} className="sw-btn sw-btn-primary">
               Log in to create
             </button>

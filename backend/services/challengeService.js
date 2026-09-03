@@ -32,7 +32,12 @@ function assertChallengeMutable(challenge) {
 
 async function refreshChallengeRow(challenge) {
     if (!challenge) return challenge;
-    const next = deriveStatus(challenge.start_date, challenge.end_date, challenge.status);
+    const next = deriveStatus(
+        challenge.start_date,
+        challenge.end_date,
+        challenge.status,
+        challenge.duration_days
+    );
     if (next !== challenge.status) {
         const db = getDb();
         await db.prepare(`UPDATE challenges SET status = ? WHERE id = ?`).run(next, challenge.id);
@@ -248,7 +253,7 @@ async function createChallenge({ title, durationDays, startDate, partyStakes, us
     }
 
     const endDateStr = computeEndDate(startDateStr, duration);
-    const status = deriveStatus(startDateStr, endDateStr, 'scheduled');
+    const status = deriveStatus(startDateStr, endDateStr, 'scheduled', duration);
     const code = inviteCode();
 
     const result = await db.prepare(`
@@ -334,12 +339,9 @@ async function updateMember(challengeId, userId, { name, leetcode_username }) {
     return userId;
 }
 
-async function deleteArchivedChallenge(challengeId) {
+async function deleteChallenge(challengeId) {
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge not found');
-    if (challenge.status !== 'archived') {
-        throw new Error('Archive the challenge before deleting it. This removes all scores, posts, and members for that circuit only.');
-    }
     const db = getDb();
     await db.prepare(`DELETE FROM credited_problems WHERE challenge_id = ?`).run(challengeId);
     await db.prepare(`DELETE FROM processed_submissions WHERE challenge_id = ?`).run(challengeId);
@@ -348,6 +350,10 @@ async function deleteArchivedChallenge(challengeId) {
     await db.prepare(`DELETE FROM forum_posts WHERE challenge_id = ?`).run(challengeId);
     await db.prepare(`DELETE FROM challenge_members WHERE challenge_id = ?`).run(challengeId);
     await db.prepare(`DELETE FROM challenges WHERE id = ?`).run(challengeId);
+}
+
+async function deleteArchivedChallenge(challengeId) {
+    return deleteChallenge(challengeId);
 }
 
 async function regenerateInviteCode(challengeId) {
@@ -411,6 +417,7 @@ module.exports = {
     listChallengesForUser,
     createChallenge,
     archiveChallenge,
+    deleteChallenge,
     deleteArchivedChallenge,
     updateChallenge,
     updateMember,

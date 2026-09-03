@@ -58,18 +58,7 @@ export default function App() {
   if (route.name === 'superadmin') {
     page = <SuperAdminDashboard {...shell} />;
   } else if (route.name === 'create') {
-    page = currentUser ? (
-      <SetupForm
-        onSetupComplete={(data) => {
-          const id = data?.challenge?.id;
-          if (id) navigate(`/c/${id}`);
-          else navigate('/');
-        }}
-        onCancel={() => navigate('/')}
-      />
-    ) : (
-      <Home {...shell} />
-    );
+    page = <CreateChallengePage currentUser={currentUser} onDone={(id) => (id ? navigate(`/c/${id}`) : navigate('/'))} colorMode={colorMode} />;
   } else if (route.name === 'join') {
     page = (
       <JoinPage code={route.code} currentUser={currentUser} onOpenAuth={() => setAuthModalOpen(true)} colorMode={colorMode} />
@@ -89,6 +78,68 @@ export default function App() {
         onAuthSuccess={onAuthSuccess}
       />
     </>
+  );
+}
+
+function CreateChallengePage({ currentUser, onDone, colorMode }) {
+  const [allowed, setAllowed] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!currentUser) {
+        if (!cancelled) setAllowed(false);
+        return;
+      }
+      if (currentUser.is_superadmin) {
+        if (!cancelled) setAllowed(true);
+        return;
+      }
+      try {
+        const cfg = await apiFetch('/api/config');
+        if (!cancelled) setAllowed(Boolean(cfg.allow_user_challenge_create));
+      } catch {
+        if (!cancelled) setAllowed(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return (
+      <div className={`sw-page flex items-center justify-center ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
+        <div className="text-center space-y-4">
+          <p className="text-muted">Log in to create a challenge.</p>
+          <button type="button" className="sw-btn" onClick={() => onDone()}>Back home</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (allowed === null) {
+    return (
+      <div className={`sw-page flex items-center justify-center ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
+        <p className="sw-label">Checking permissions</p>
+      </div>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <div className={`sw-page flex items-center justify-center ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
+        <div className="text-center space-y-4">
+          <p className="text-muted">Only superadmins can create challenges right now.</p>
+          <button type="button" className="sw-btn" onClick={() => onDone()}>Back home</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SetupForm
+      onSetupComplete={(data) => onDone(data?.challenge?.id)}
+      onCancel={() => onDone()}
+    />
   );
 }
 
