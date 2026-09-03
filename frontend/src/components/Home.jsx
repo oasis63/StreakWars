@@ -44,6 +44,7 @@ export default function Home({
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const [live, siteConfig] = await Promise.all([
@@ -149,9 +150,32 @@ export default function Home({
         )}
 
         {loading ? (
-          <p className="sw-label">Loading circuits</p>
+          <section className="space-y-6" aria-busy="true" aria-label="Loading circuits">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border-2 border-volt border-t-transparent animate-spin" />
+              <p className="sw-label">Loading circuits</p>
+            </div>
+            {[0, 1].map((section) => (
+              <div key={section} className="space-y-3">
+                <div className="sw-skeleton h-3 w-36 rounded" />
+                <div className="grid gap-3">
+                  {[0, 1].map((card) => (
+                    <div key={card} className="sw-card px-5 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="sw-skeleton h-5 w-2/5 max-w-[220px] rounded" />
+                          <div className="sw-skeleton h-4 w-4/5 max-w-[420px] rounded" />
+                        </div>
+                        <div className="sw-skeleton h-4 w-4 rounded shrink-0" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
         ) : (
-          <>
+          <div className="sw-fade-in space-y-8">
             <section className="space-y-3">
               <p className="sw-label">Active & upcoming</p>
               {liveChallenges.length === 0 ? (
@@ -173,30 +197,29 @@ export default function Home({
                 </div>
               </section>
             )}
-          </>
-        )}
 
-        {currentUser && archived.length > 0 && (
-          <section className="space-y-3">
-            <p className="sw-label">Your archived circuits</p>
-            <div className="grid gap-3">
-              {archived.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => navigate(`/c/${c.id}`)}
-                  className="sw-card px-5 py-4 text-left hover:border-[var(--line-strong)] transition-colors"
-                >
-                  <p className="font-semibold text-cream">{c.title}</p>
-                  <p className="text-sm text-muted mt-1">Archived · {c.end_date}</p>
-                </button>
-              ))}
-            </div>
-          </section>
+            {currentUser && archived.length > 0 && (
+              <section className="space-y-3">
+                <p className="sw-label">Your archived circuits</p>
+                <div className="grid gap-3">
+                  {archived.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => navigate(`/c/${c.id}`)}
+                      className="sw-card px-5 py-4 text-left hover:border-[var(--line-strong)] transition-colors"
+                    >
+                      <p className="font-semibold text-cream">{c.title}</p>
+                      <p className="text-sm text-muted mt-1">Archived · {c.end_date}</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         )}
-
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 }
