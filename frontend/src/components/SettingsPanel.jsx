@@ -290,7 +290,23 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
 
           <div className="px-6 py-4 border-t border-[var(--line)] space-y-3">
             {inviteCode && (
-              <p className="text-xs text-muted font-mono">Invite code: {inviteCode}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs text-muted font-mono">Invite code: {inviteCode}</p>
+                <button
+                  type="button"
+                  className="text-xs text-volt"
+                  onClick={async () => {
+                    try {
+                      await apiFetch(`/api/challenges/${challengeId}/invite`, { method: 'POST' });
+                      if (onSettingsUpdated) onSettingsUpdated();
+                    } catch (err) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  New code
+                </button>
+              </div>
             )}
             {(challengeStatus === 'completed') && (
               <button type="button" onClick={handleArchive} className="text-xs text-muted hover:text-volt">
