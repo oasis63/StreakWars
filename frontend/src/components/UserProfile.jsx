@@ -37,7 +37,7 @@ export default function UserProfile({ userId, challengeId, onClose, colorMode = 
 
   return (
     <div className={`sw-page ${colorMode === 'light' ? 'mode-light' : 'mode-dark'}`}>
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 flex-1 w-full">
         <div className="flex items-center justify-between gap-3">
           <button onClick={onClose} className="sw-btn text-sm">
             <ArrowLeft className="w-4 h-4" /> Standings

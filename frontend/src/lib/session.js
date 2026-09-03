@@ -51,6 +51,7 @@ export function parseRoute() {
   const path = (window.location.pathname.replace(/\/$/, '') || '/');
   if (path.startsWith('/superadmin')) return { name: 'superadmin' };
   if (path.startsWith('/create')) return { name: 'create' };
+  if (path === '/me' || path.startsWith('/profile')) return { name: 'account' };
   if (path.startsWith('/join/')) return { name: 'join', code: decodeURIComponent(path.slice(6)) };
   const match = path.match(/^\/c\/(\d+)/);
   if (match) return { name: 'challenge', id: match[1] };

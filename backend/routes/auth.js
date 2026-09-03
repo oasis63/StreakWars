@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { prepare } = require('../db/db');
+const { prepare, getDb } = require('../db/db');
 const { signToken, publicUser } = require('../utils/auth');
 const { requireAuth } = require('../middleware/auth');
+const { serializeChallenge, refreshAllChallengeStatuses } = require('../services/challengeService');
 
 function withToken(user) {
     const token = signToken(user);
@@ -102,6 +103,36 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', requireAuth, async (req, res) => {
   res.json({ success: true, user: withToken(req.user) });
+});
+
+router.get('/account', requireAuth, async (req, res) => {
+  try {
+    await refreshAllChallengeStatuses();
+    const db = getDb();
+    const createdRows = await db.prepare(`
+      SELECT c.*,
+        (SELECT COUNT(*) FROM challenge_members m WHERE m.challenge_id = c.id AND m.removed_at IS NULL) AS member_count
+      FROM challenges c
+      WHERE c.created_by = ?
+      ORDER BY c.id DESC
+    `).all(req.user.id);
+    const memberRows = await db.prepare(`
+      SELECT c.*, m.role AS my_role,
+        (SELECT COUNT(*) FROM challenge_members mm WHERE mm.challenge_id = c.id AND mm.removed_at IS NULL) AS member_count
+      FROM challenges c
+      INNER JOIN challenge_members m ON m.challenge_id = c.id
+      WHERE m.user_id = ? AND m.removed_at IS NULL
+      ORDER BY c.id DESC
+    `).all(req.user.id);
+    res.json({
+      success: true,
+      user: withToken(req.user),
+      created: createdRows.map((c) => serializeChallenge(c, { member_count: parseInt(c.member_count, 10) || 0, my_role: 'admin' })),
+      member_of: memberRows.map((c) => serializeChallenge(c, { member_count: parseInt(c.member_count, 10) || 0 }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

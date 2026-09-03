@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 import { apiFetch } from '../lib/session';
+import { useConfirm } from './ConfirmDialog';
 
 const THEMES = [
   {
@@ -24,7 +24,7 @@ const THEMES = [
   },
 ];
 
-export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, challengeEnded = false, isSuperadmin = false, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
+export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, challengeEnded = false, isSuperadmin = false, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
@@ -40,6 +40,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
   const [editingUserId, setEditingUserId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editHandle, setEditHandle] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
 
   if (!isOpen) return null;
 
@@ -75,7 +76,13 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
   };
 
   const handleRemoveUser = async (userId, name) => {
-    if (!window.confirm(`Remove ${name} from the circuit?`)) return;
+    const ok = await confirm({
+      title: 'Remove player?',
+      message: `Remove ${name} from this circuit?`,
+      confirmLabel: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/challenges/${challengeId}/members/${userId}`, { method: 'DELETE' });
       if (onSettingsUpdated) onSettingsUpdated();
@@ -85,7 +92,12 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
   };
 
   const handleArchive = async () => {
-    if (!window.confirm('Archive this completed challenge? Scores stay frozen and it leaves the home list.')) return;
+    const ok = await confirm({
+      title: 'Archive this circuit?',
+      message: 'Scores stay frozen and it leaves the live home list. You can still open it from Completed until you delete it.',
+      confirmLabel: 'Archive',
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/challenges/${challengeId}/archive`, { method: 'POST' });
       if (onSettingsUpdated) onSettingsUpdated();
@@ -278,12 +290,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
             )}
 
             <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="sw-label">Appearance</p>
-                {onColorModeChange && (
-                  <ThemeToggle colorMode={colorMode} onChange={onColorModeChange} />
-                )}
-              </div>
+              <p className="sw-label">Appearance</p>
               <div className="space-y-2">
                 {THEMES.map((t) => {
                   const on = activeTheme === t.id;
@@ -420,6 +427,7 @@ export default function SettingsPanel({ isOpen, onClose, challengeId, challengeT
           </div>
         </div>
       )}
+      {confirmDialog}
     </>
   );
 }

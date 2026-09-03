@@ -106,12 +106,21 @@ html.mode-light.theme-rose .sw-page {
   html {
     font-size: 16px;
     background: var(--ink);
+    min-height: 100%;
   }
 
   body {
     background: var(--ink);
     color: var(--cream);
     font-family: 'Instrument Sans', system-ui, sans-serif;
+    min-height: 100%;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
   }
 
   .font-mono-title,
@@ -128,6 +137,9 @@ html.mode-light.theme-rose .sw-page {
 @layer components {
   .sw-page {
     min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
     background-color: var(--ink);
     background-image:
       radial-gradient(ellipse 70% 45% at 12% -8%, var(--glow), transparent 58%),
