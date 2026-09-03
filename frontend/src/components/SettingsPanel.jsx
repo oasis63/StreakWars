@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
-import { API_BASE_URL } from '../config';
 import ThemeToggle from './ThemeToggle';
+import { apiFetch } from '../lib/session';
 
 const THEMES = [
   {
@@ -24,7 +24,7 @@ const THEMES = [
   },
 ];
 
-export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderboard, onSettingsUpdated, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
+export default function SettingsPanel({ isOpen, onClose, challengeId, challengeTitle, partyStakes, challengeStatus, inviteCode, leaderboard, onSettingsUpdated, onDeleted, activeTheme = 'green', onThemeChange, colorMode = 'dark', onColorModeChange }) {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [addingUser, setAddingUser] = useState(false);
@@ -34,6 +34,12 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   const [titleInput, setTitleInput] = useState('');
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [editTitle, setEditTitle] = useState(challengeTitle || '');
+  const [editStakes, setEditStakes] = useState(partyStakes || '');
+  const [savingMeta, setSavingMeta] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editHandle, setEditHandle] = useState('');
 
   if (!isOpen) return null;
 
@@ -47,16 +53,13 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
 
     setAddingUser(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/settings/users`, {
+      await apiFetch(`/api/challenges/${challengeId}/members`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newName.trim(),
           leetcode_username: newUsername.trim(),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to add player.');
       setNewName('');
       setNewUsername('');
       if (onSettingsUpdated) onSettingsUpdated();
@@ -70,10 +73,57 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   const handleRemoveUser = async (userId, name) => {
     if (!window.confirm(`Remove ${name} from the circuit?`)) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/settings/users/${userId}`, { method: 'DELETE' });
-      if (res.ok && onSettingsUpdated) onSettingsUpdated();
+      await apiFetch(`/api/challenges/${challengeId}/members/${userId}`, { method: 'DELETE' });
+      if (onSettingsUpdated) onSettingsUpdated();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!window.confirm('Archive this completed challenge? Scores stay frozen and it leaves the home list.')) return;
+    try {
+      await apiFetch(`/api/challenges/${challengeId}/archive`, { method: 'POST' });
+      if (onSettingsUpdated) onSettingsUpdated();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSaveMeta = async (e) => {
+    e.preventDefault();
+    setSavingMeta(true);
+    setError(null);
+    try {
+      await apiFetch(`/api/challenges/${challengeId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title: editTitle, party_stakes: editStakes }),
+      });
+      if (onSettingsUpdated) onSettingsUpdated();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingMeta(false);
+    }
+  };
+
+  const startEditMember = (u) => {
+    setEditingUserId(u.user_id);
+    setEditName(u.name);
+    setEditHandle(u.leetcode_username);
+  };
+
+  const handleSaveMember = async (e) => {
+    e.preventDefault();
+    try {
+      await apiFetch(`/api/challenges/${challengeId}/members/${editingUserId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: editName, leetcode_username: editHandle }),
+      });
+      setEditingUserId(null);
+      if (onSettingsUpdated) onSettingsUpdated();
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -87,12 +137,11 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
   const handleConfirmDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/settings/delete-challenge`, { method: 'POST' });
-      if (res.ok) {
-        setDeleteModalOpen(false);
-        onClose();
-        if (onSettingsUpdated) onSettingsUpdated();
-      }
+      await apiFetch(`/api/challenges/${challengeId}`, { method: 'DELETE' });
+      setDeleteModalOpen(false);
+      onClose();
+      if (onDeleted) onDeleted();
+      else if (onSettingsUpdated) onSettingsUpdated();
     } catch (err) {
       console.error('Failed to delete challenge:', err);
     } finally {
@@ -120,28 +169,57 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
           </div>
 
           <div className="px-6 py-6 overflow-y-auto flex-1 space-y-8">
+            <section className="sw-card p-4 space-y-3">
+              <p className="sw-label">Circuit details</p>
+              <form onSubmit={handleSaveMeta} className="space-y-2.5">
+                <input className="sw-input text-sm" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+                <input className="sw-input text-sm" placeholder="Party stakes" value={editStakes} onChange={(e) => setEditStakes(e.target.value)} />
+                <button type="submit" disabled={savingMeta} className="sw-btn w-full py-2 disabled:opacity-50">
+                  {savingMeta ? 'Saving…' : 'Save details'}
+                </button>
+              </form>
+            </section>
+
             <section className="space-y-3">
               <p className="sw-label">Players</p>
               <div className="space-y-2">
                 {leaderboard && leaderboard.map((u) => (
                   <div
                     key={u.user_id}
-                    className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--panel)] border border-[var(--line)]"
+                    className="px-3 py-2.5 rounded-xl bg-[var(--panel)] border border-[var(--line)] space-y-2"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-lg leading-none">{u.emoji || u.reactive_icon || '👤'}</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{u.name}</p>
-                        <p className="text-xs text-muted font-mono truncate">@{u.leetcode_username}</p>
+                    {editingUserId === u.user_id ? (
+                      <form onSubmit={handleSaveMember} className="space-y-2">
+                        <input className="sw-input text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        <input className="sw-input text-sm" value={editHandle} onChange={(e) => setEditHandle(e.target.value)} />
+                        <div className="flex gap-2">
+                          <button type="submit" className="sw-btn text-xs">Save</button>
+                          <button type="button" className="sw-btn text-xs" onClick={() => setEditingUserId(null)}>Cancel</button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-lg leading-none">{u.emoji || u.reactive_icon || '👤'}</span>
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">{u.name}</p>
+                            <p className="text-xs text-muted font-mono truncate">@{u.leetcode_username}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <button type="button" onClick={() => startEditMember(u)} className="text-xs text-muted hover:text-volt">
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveUser(u.user_id, u.name)}
+                            className="text-xs text-muted hover:text-coral"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveUser(u.user_id, u.name)}
-                      className="text-xs text-muted hover:text-coral shrink-0"
-                    >
-                      Remove
-                    </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -210,15 +288,43 @@ export default function SettingsPanel({ isOpen, onClose, challengeTitle, leaderb
             </section>
           </div>
 
-          <div className="px-6 py-4 border-t border-[var(--line)]">
-            <button
-              type="button"
-              onClick={openDeleteModal}
-              className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete challenge
-            </button>
+          <div className="px-6 py-4 border-t border-[var(--line)] space-y-3">
+            {inviteCode && (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs text-muted font-mono">Invite code: {inviteCode}</p>
+                <button
+                  type="button"
+                  className="text-xs text-volt"
+                  onClick={async () => {
+                    try {
+                      await apiFetch(`/api/challenges/${challengeId}/invite`, { method: 'POST' });
+                      if (onSettingsUpdated) onSettingsUpdated();
+                    } catch (err) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  New code
+                </button>
+              </div>
+            )}
+            {(challengeStatus === 'completed') && (
+              <button type="button" onClick={handleArchive} className="text-xs text-muted hover:text-volt">
+                Archive challenge
+              </button>
+            )}
+            {challengeStatus === 'archived' ? (
+              <button
+                type="button"
+                onClick={openDeleteModal}
+                className="text-xs text-muted hover:text-coral inline-flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete archived challenge
+              </button>
+            ) : (
+              <p className="text-[11px] text-muted">Archive first to delete this circuit and all of its data.</p>
+            )}
           </div>
         </aside>
       </div>

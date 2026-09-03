@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
+const { migrateMultiChallenge } = require('./migrateMultiChallenge');
 require('dotenv').config();
 
 let usePostgres = false;
@@ -71,6 +72,7 @@ async function initDb() {
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_emoji VARCHAR(50) DEFAULT '👤'",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_color VARCHAR(50) DEFAULT '#6366f1'",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_participant INTEGER DEFAULT 1",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin INTEGER DEFAULT 0",
             "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS title VARCHAR(255) DEFAULT ''",
             "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General'",
             "ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
@@ -80,6 +82,8 @@ async function initDb() {
             await pgPool.query(sql).catch(() => {});
         }
         await pgPool.query(`UPDATE user_stats SET sync_status = 'ok', sync_warning = NULL WHERE sync_status = 'needs_review' AND (sync_warning LIKE '%baseline%' OR sync_warning IS NULL OR sync_warning = '')`).catch(() => {});
+
+        await migrateMultiChallenge({ usePostgres: true, pgPool, sqliteDb: null });
 
         console.log('🐘 PostgreSQL database connected & initialized successfully.');
         isInitialized = true;
@@ -124,6 +128,7 @@ async function initDb() {
             "ALTER TABLE users ADD COLUMN avatar_emoji TEXT DEFAULT '👤'",
             "ALTER TABLE users ADD COLUMN avatar_color TEXT DEFAULT '#6366f1'",
             "ALTER TABLE users ADD COLUMN is_participant INTEGER DEFAULT 1",
+            "ALTER TABLE users ADD COLUMN is_superadmin INTEGER DEFAULT 0",
             "ALTER TABLE forum_posts ADD COLUMN title TEXT DEFAULT ''",
             "ALTER TABLE forum_posts ADD COLUMN category TEXT DEFAULT 'General'",
             "ALTER TABLE forum_posts ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))",
@@ -137,6 +142,8 @@ async function initDb() {
         } catch (e) {}
 
         sqliteDb.prepare("INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)").run('party_stakes', 'lowest score buys the party');
+
+        await migrateMultiChallenge({ usePostgres: false, pgPool: null, sqliteDb });
 
         console.log('📦 SQLite database connected & initialized successfully.');
         isInitialized = true;

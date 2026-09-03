@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { prepare } = require('../db/db');
+const { signToken, publicUser } = require('../utils/auth');
+const { requireAuth } = require('../middleware/auth');
 
-/**
- * POST /api/auth/register - Register a new global user account
- */
+function withToken(user) {
+    const token = signToken(user);
+    return { ...publicUser(user), token };
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { username, display_name, pin_code, avatar_emoji, avatar_color } = req.body;
@@ -16,37 +20,23 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Display name is required.' });
     }
 
-    // Clean username (remove leading @, lowercase)
     const cleanUsername = username.trim().replace(/^@/, '').toLowerCase();
     const cleanDisplayName = display_name.trim();
     const cleanPin = (pin_code || '1234').toString().trim();
     const cleanAvatar = avatar_emoji || '👤';
     const cleanColor = avatar_color || '#6366f1';
 
-    // Check if username already exists
-    let existing = null;
-    try {
-      const checkStmt = prepare(`SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(leetcode_username) = ?`);
-      existing = await checkStmt.get(cleanUsername, cleanUsername);
-    } catch (e) {
-      try {
-        const checkFallback = prepare(`SELECT id FROM users WHERE LOWER(name) = ? OR LOWER(leetcode_username) = ?`);
-        existing = await checkFallback.get(cleanUsername, cleanUsername);
-      } catch (err) {}
-    }
-
+    let existing = await prepare(`SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(leetcode_username) = ?`).get(cleanUsername, cleanUsername);
     if (existing) {
       return res.status(400).json({ error: `Username @${cleanUsername} is already taken. Please choose another.` });
     }
 
-    // Insert new user account (is_participant = 0 so user is not automatically added to the LeetCode challenge leaderboard/track)
-    const insertStmt = prepare(`
+    const isSuper = cleanUsername === 'rajesh' ? 1 : 0;
+    const result = await prepare(`
       INSERT INTO users (
-        name, leetcode_username, username, display_name, pin_code, avatar_emoji, avatar_color, color, emoji, is_participant
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-    `);
-
-    const result = await insertStmt.run(
+        name, leetcode_username, username, display_name, pin_code, avatar_emoji, avatar_color, color, emoji, is_participant, is_superadmin
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+    `).run(
       cleanDisplayName,
       cleanUsername,
       cleanUsername,
@@ -55,58 +45,29 @@ router.post('/register', async (req, res) => {
       cleanAvatar,
       cleanColor,
       cleanColor,
-      cleanAvatar
+      cleanAvatar,
+      isSuper
     );
 
     let newUser = result.row;
+    const insertedId = result.lastInsertRowid || (result.row && result.row.id);
+    if (!newUser && insertedId) {
+      newUser = await prepare(`SELECT * FROM users WHERE id = ?`).get(insertedId);
+    }
     if (!newUser) {
-      const insertedId = result.lastInsertRowid || result.id;
-      if (insertedId) {
-        const getUserStmt = prepare(`SELECT * FROM users WHERE id = ?`);
-        newUser = await getUserStmt.get(insertedId);
-      }
+      newUser = await prepare(`SELECT * FROM users WHERE LOWER(username) = ?`).get(cleanUsername);
     }
 
-    if (!newUser) {
-      try {
-        const getUserStmt = prepare(`SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(leetcode_username) = ?`);
-        newUser = await getUserStmt.get(cleanUsername, cleanUsername);
-      } catch (e) {}
-    }
-
-    if (!newUser) {
-      newUser = {
-        id: result.lastInsertRowid || Date.now(),
-        username: cleanUsername,
-        display_name: cleanDisplayName,
-        avatar_emoji: cleanAvatar,
-        avatar_color: cleanColor
-      };
-    }
-
-    res.status(201).json({
-      success: true,
-      user: {
-        id: newUser.id,
-        username: `@${newUser.username || cleanUsername}`,
-        display_name: newUser.display_name || newUser.name || cleanDisplayName,
-        avatar_emoji: newUser.avatar_emoji || newUser.emoji || cleanAvatar,
-        avatar_color: newUser.avatar_color || newUser.color || cleanColor
-      }
-    });
+    res.status(201).json({ success: true, user: withToken(newUser) });
   } catch (err) {
     console.error('Error registering user:', err);
     res.status(500).json({ error: err.message || 'Failed to register account' });
   }
 });
 
-/**
- * POST /api/auth/login - Log in with Username & 4-Digit PIN
- */
 router.post('/login', async (req, res) => {
   try {
     const { username, pin_code } = req.body;
-
     if (!username || !username.trim()) {
       return res.status(400).json({ error: 'Username is required.' });
     }
@@ -114,74 +75,33 @@ router.post('/login', async (req, res) => {
     const cleanUsername = username.trim().replace(/^@/, '').toLowerCase();
     const cleanPin = (pin_code || '').toString().trim();
 
-    let user = null;
-    try {
-      const findStmt = prepare(`
-        SELECT * FROM users 
-        WHERE LOWER(username) = ? OR LOWER(leetcode_username) = ? OR LOWER(name) = ?
-      `);
-      user = await findStmt.get(cleanUsername, cleanUsername, cleanUsername);
-    } catch (e) {
-      try {
-        const findFallback = prepare(`
-          SELECT * FROM users 
-          WHERE LOWER(name) = ? OR LOWER(leetcode_username) = ?
-        `);
-        user = await findFallback.get(cleanUsername, cleanUsername);
-      } catch (err) {}
-    }
+    const user = await prepare(`
+      SELECT * FROM users
+      WHERE LOWER(username) = ? OR LOWER(leetcode_username) = ? OR LOWER(name) = ?
+    `).get(cleanUsername, cleanUsername, cleanUsername);
 
     if (!user) {
       return res.status(404).json({ error: `Account '@${cleanUsername}' not found. Please check username or register.` });
     }
 
-    // Verify PIN if set
     if (user.pin_code && user.pin_code !== '1234' && cleanPin && user.pin_code !== cleanPin) {
       return res.status(401).json({ error: 'Incorrect 4-digit PIN.' });
     }
 
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: `@${user.username || user.leetcode_username || cleanUsername}`,
-        display_name: user.display_name || user.name,
-        avatar_emoji: user.avatar_emoji || user.emoji || '👤',
-        avatar_color: user.avatar_color || user.color || '#6366f1'
-      }
-    });
+    if (cleanUsername === 'rajesh' && !user.is_superadmin) {
+      await prepare(`UPDATE users SET is_superadmin = 1 WHERE id = ?`).run(user.id);
+      user.is_superadmin = 1;
+    }
+
+    res.json({ success: true, user: withToken(user) });
   } catch (err) {
     console.error('Error logging in:', err);
     res.status(500).json({ error: err.message || 'Failed to log in' });
   }
 });
 
-/**
- * GET /api/auth/me/:id - Fetch current user session details
- */
-router.get('/me/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const findStmt = prepare(`SELECT * FROM users WHERE id = ?`);
-    const user = await findStmt.get(id);
-
-    if (!user) {
-      return res.status(404).json({ error: 'User session expired or not found' });
-    }
-
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: `@${user.username || user.name.toLowerCase().replace(/\s+/g, '_')}`,
-        display_name: user.display_name || user.name,
-        avatar_emoji: user.avatar_emoji || user.emoji || '👤',
-        avatar_color: user.avatar_color || user.color || '#6366f1'
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch user session' });
-  }
+router.get('/me', requireAuth, async (req, res) => {
+  res.json({ success: true, user: withToken(req.user) });
 });
 
 module.exports = router;

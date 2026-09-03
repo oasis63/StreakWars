@@ -78,12 +78,11 @@ router.get('/persona', (req, res) => {
 router.get('/', async (req, res) => {
   try {
     await cleanupOldPosts();
-
-    const allPostsStmt = prepare(`
-      SELECT * FROM forum_posts 
-      ORDER BY created_at ASC
-    `);
-    const posts = await allPostsStmt.all();
+    const challengeId = parseInt(req.query.challenge_id, 10);
+    const allPostsStmt = challengeId
+      ? prepare(`SELECT * FROM forum_posts WHERE challenge_id = ? ORDER BY created_at ASC`)
+      : prepare(`SELECT * FROM forum_posts ORDER BY created_at ASC`);
+    const posts = challengeId ? await allPostsStmt.all(challengeId) : await allPostsStmt.all();
 
     // Separate into top-level topics and comments
     const topLevelTopics = [];
@@ -127,7 +126,7 @@ router.post('/', async (req, res) => {
   try {
     await cleanupOldPosts();
 
-    const { title, category, content, parent_id, author } = req.body;
+    const { title, category, content, parent_id, author, challenge_id } = req.body;
 
     if (!content || !content.trim()) {
       return res.status(400).json({ error: 'Content cannot be empty.' });
@@ -138,11 +137,12 @@ router.post('/', async (req, res) => {
 
     const insertStmt = prepare(`
       INSERT INTO forum_posts (
-        title, category, author_name, author_avatar, author_color, author_handle, author_title, content, parent_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        challenge_id, title, category, author_name, author_avatar, author_color, author_handle, author_title, content, parent_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = await insertStmt.run(
+      challenge_id || null,
       title ? title.trim() : '',
       category ? category.trim() : 'General',
       persona.name,

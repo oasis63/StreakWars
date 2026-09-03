@@ -5,21 +5,21 @@ import ThemeToggle from './ThemeToggle';
 import Footer from './Footer';
 import { PointBreakdown, ScoreBreakdown } from './ScoreBreakdowns';
 
-export default function UserProfile({ userId, onClose, colorMode = 'dark', onColorModeChange }) {
+export default function UserProfile({ userId, challengeId, onClose, colorMode = 'dark', onColorModeChange }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    fetch(`${API_BASE_URL}/api/profile/${userId}`)
+    fetch(`${API_BASE_URL}/api/profile/${userId}${challengeId ? `?challenge_id=${challengeId}` : ''}`)
       .then((res) => res.json())
       .then((d) => {
         setData(d);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [userId]);
+  }, [userId, challengeId]);
 
   if (!userId) return null;
 

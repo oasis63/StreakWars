@@ -1,11 +1,17 @@
-// backend/routes/sync.js
 const express = require('express');
 const router = express.Router();
-const { syncAllUsers } = require('../services/gameEngine');
+const { syncChallenge, syncAllUsers } = require('../services/gameEngine');
 
-// POST /api/sync (Manual sync trigger)
 router.post('/', async (req, res) => {
     try {
+        const challengeId = parseInt(req.body.challenge_id || req.query.challenge_id, 10);
+        if (challengeId) {
+            const result = await syncChallenge(challengeId);
+            if (result.skipped) {
+                return res.json({ success: true, frozen: true, message: result.reason });
+            }
+            return res.json({ success: true, message: 'Manual sync completed successfully' });
+        }
         await syncAllUsers();
         res.json({ success: true, message: 'Manual sync completed successfully' });
     } catch (err) {

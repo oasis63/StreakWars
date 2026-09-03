@@ -16,7 +16,7 @@ const CATEGORIES = [
   { id: 'debugging', name: '🐛 Debugging & Code', icon: '🐛' }
 ];
 
-export default function DiscussionForum({ currentUser, onOpenAuth }) {
+export default function DiscussionForum({ currentUser, onOpenAuth, challengeId }) {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -85,7 +85,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
   const fetchTopics = async () => {
     setLoading(true);
     try {
-      const data = await safeJsonFetch(`${API_BASE_URL}/api/forum`);
+      const data = await safeJsonFetch(`${API_BASE_URL}/api/forum?challenge_id=${challengeId || ''}`);
       if (data.success) {
         setTopics(data.topics || []);
       }
@@ -99,7 +99,7 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
   useEffect(() => {
     fetchRandomPersona();
     fetchTopics();
-  }, []);
+  }, [challengeId]);
 
   const activePoster = (postMode === 'account' && currentUser)
     ? {
@@ -132,7 +132,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
           title: newTopicTitle,
           category: newTopicCategory,
           content: newTopicContent,
-          author: activePoster
+          author: activePoster,
+          challenge_id: challengeId
         })
       });
 
@@ -166,7 +167,8 @@ export default function DiscussionForum({ currentUser, onOpenAuth }) {
         body: JSON.stringify({
           content: commentContent,
           parent_id: parentId,
-          author: activePoster
+          author: activePoster,
+          challenge_id: challengeId
         })
       });
 
