@@ -11,7 +11,7 @@ export default function Footer() {
           rel="noopener noreferrer"
           className="text-cream hover:text-volt transition-colors"
         >
-          RR
+          Rajesh
         </a>
       </p>
     </footer>
