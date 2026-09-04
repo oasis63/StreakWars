@@ -204,12 +204,20 @@ async function recomputeAllStats(challengeId) {
 
     const userCalculations = [];
 
+    const allCredited = await db.prepare(`
+        SELECT user_id, difficulty, credit_type, points_awarded, day_number, credited_at
+        FROM credited_problems
+        WHERE challenge_id = ?
+    `).all(challengeId);
+    const creditedByUser = new Map();
+    for (const row of allCredited || []) {
+        const list = creditedByUser.get(row.user_id) || [];
+        list.push(row);
+        creditedByUser.set(row.user_id, list);
+    }
+
     for (const member of members) {
-        const credited = await db.prepare(`
-            SELECT difficulty, credit_type, points_awarded, day_number, credited_at
-            FROM credited_problems
-            WHERE challenge_id = ? AND user_id = ?
-        `).all(challengeId, member.user_id);
+        const credited = creditedByUser.get(member.user_id) || [];
 
         let easySolved = 0;
         let mediumSolved = 0;
@@ -389,16 +397,8 @@ async function buildLeaderboardPayload(challengeId) {
     const challenge = await getChallengeById(challengeId);
     if (!challenge) return null;
 
-    if (!isFrozenStatus(challenge.status)) {
-        try {
-            await recomputeAllStats(challengeId);
-        } catch (e) {
-            console.error('Leaderboard recompute notice:', e.message);
-        }
-    }
-
     const durationDays = parseInt(challenge.duration_days, 10) || 30;
-    const currentDay = await getCurrentChallengeDay(challengeId);
+    const currentDay = challenge.start_date ? getDayNumber(Date.now(), challenge.start_date) : 1;
     const daysRemaining = Math.max(0, durationDays - currentDay + 1);
     const challengeEnded = challenge.status === 'completed'
         || challenge.status === 'archived'
