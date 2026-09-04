@@ -8,7 +8,7 @@ const path = require('path');
 dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
 
-const { initDb } = require('./db/db');
+const { initDb, closeDb } = require('./db/db');
 const { startCron } = require('./services/cron');
 
 const configRouter = require('./routes/config');
@@ -58,4 +58,20 @@ async function startServer() {
     });
 }
 
-startServer();
+startServer().catch((err) => {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+});
+
+async function shutdown(signal) {
+    console.log(`${signal} received, closing database pool...`);
+    try {
+        await closeDb();
+    } catch (e) {
+        console.error('Error closing database:', e.message);
+    }
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

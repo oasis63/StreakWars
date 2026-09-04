@@ -28,19 +28,25 @@ function pgNeedsSsl(dbUrl) {
     return /supabase\.co|render\.com|oregon-postgres|sslmode=require/i.test(dbUrl);
 }
 
-/**
- * Initialize database connection (PostgreSQL via env or SQLite fallback)
- */
-async function initDb() {
-    if (isInitialized) return;
+function isSupabaseUrl(dbUrl) {
+    return /supabase\.co/i.test(dbUrl || '');
+}
 
-    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
+function isTransactionPooler(dbUrl) {
+    return /:6543(\/|\?|$)/.test(dbUrl || '') || /pooler\.supabase\.com:6543/i.test(dbUrl || '');
+}
 
-    // 1. Configure PostgreSQL pool if environment URL or host is defined
-    const poolConfig = dbUrl ? {
+function buildPoolConfig(dbUrl) {
+    const supabase = isSupabaseUrl(dbUrl);
+    const txPooler = isTransactionPooler(dbUrl);
+    // Supabase nano/free has a small connection budget. Default pg Pool max=10
+    // plus overlapping Render deploys exhausts it and the DB looks "crashed".
+    const max = parseInt(process.env.PG_POOL_MAX, 10)
+        || (txPooler ? 8 : supabase ? 4 : 10);
+
+    const base = dbUrl ? {
         connectionString: dbUrl,
         ssl: pgNeedsSsl(dbUrl) ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 15000
     } : {
         host: process.env.PGHOST || 'localhost',
         port: parseInt(process.env.PGPORT, 10) || 5432,
@@ -48,8 +54,29 @@ async function initDb() {
         password: process.env.PGPASSWORD || 'streakwars_password',
         database: process.env.PGDATABASE || 'streakwars_db',
         ssl: process.env.PGSSL ? { rejectUnauthorized: false } : false,
-        connectionTimeoutMillis: 5000
     };
+
+    return {
+        ...base,
+        max,
+        min: 0,
+        idleTimeoutMillis: 20000,
+        connectionTimeoutMillis: supabase ? 15000 : 5000,
+        allowExitOnIdle: true,
+        keepAlive: true,
+    };
+}
+
+/**
+ * Initialize database connection (PostgreSQL via env or SQLite fallback)
+ */
+async function initDb() {
+    if (isInitialized) return;
+
+    const dbUrl = process.env.DATABASE_URL || process.env.INTERNAL_DATABASE_URL;
+    const requirePostgres = Boolean(dbUrl);
+
+    const poolConfig = buildPoolConfig(dbUrl);
 
     try {
         pgPool = new Pool(poolConfig);
@@ -91,16 +118,20 @@ async function initDb() {
 
         await migrateMultiChallenge({ usePostgres: true, pgPool, sqliteDb: null });
 
-        console.log('🐘 PostgreSQL database connected & initialized successfully.');
+        console.log(`🐘 PostgreSQL connected (pool max=${poolConfig.max}${isTransactionPooler(dbUrl) ? ', transaction pooler' : isSupabaseUrl(dbUrl) ? ', supabase' : ''}).`);
         isInitialized = true;
         return;
     } catch (err) {
-        console.warn(`⚠️ PostgreSQL connection failed (${err.message}). Falling back to embedded SQLite database...`);
+        console.warn(`⚠️ PostgreSQL connection failed (${err.message}).`);
         usePostgres = false;
         if (pgPool) {
             try { await pgPool.end(); } catch (e) {}
             pgPool = null;
         }
+        if (requirePostgres) {
+            throw new Error(`PostgreSQL is required in production but connection failed: ${err.message}`);
+        }
+        console.warn('Falling back to embedded SQLite database...');
     }
 
     // 2. Fallback to SQLite (DatabaseSync)
@@ -229,9 +260,20 @@ function getDb() {
     };
 }
 
+async function closeDb() {
+    if (pgPool) {
+        try { await pgPool.end(); } catch (e) {}
+        pgPool = null;
+    }
+    sqliteDb = null;
+    isInitialized = false;
+    usePostgres = false;
+}
+
 module.exports = {
     getDb,
     initDb,
+    closeDb,
     prepare,
     exec
 };
