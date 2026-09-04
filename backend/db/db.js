@@ -23,6 +23,22 @@ function convertSqlForPg(sql) {
     return converted;
 }
 
+function connectionStringForPool(dbUrl) {
+    if (!dbUrl) return dbUrl;
+    try {
+        const parsed = new URL(dbUrl);
+        parsed.searchParams.delete('sslmode');
+        parsed.searchParams.delete('uselibpqcompat');
+        return parsed.toString();
+    } catch {
+        return String(dbUrl)
+            .replace(/[?&]sslmode=[^&]*/gi, '')
+            .replace(/[?&]uselibpqcompat=[^&]*/gi, '')
+            .replace(/\?&/, '?')
+            .replace(/[?&]$/, '');
+    }
+}
+
 function pgNeedsSsl(dbUrl) {
     if (!dbUrl) return Boolean(process.env.PGSSL);
     return /supabase\.co|render\.com|oregon-postgres|sslmode=require/i.test(dbUrl);
@@ -39,13 +55,11 @@ function isTransactionPooler(dbUrl) {
 function buildPoolConfig(dbUrl) {
     const supabase = isSupabaseUrl(dbUrl);
     const txPooler = isTransactionPooler(dbUrl);
-    // Supabase nano/free has a small connection budget. Default pg Pool max=10
-    // plus overlapping Render deploys exhausts it and the DB looks "crashed".
     const max = parseInt(process.env.PG_POOL_MAX, 10)
         || (txPooler ? 8 : supabase ? 4 : 10);
 
     const base = dbUrl ? {
-        connectionString: dbUrl,
+        connectionString: connectionStringForPool(dbUrl),
         ssl: pgNeedsSsl(dbUrl) ? { rejectUnauthorized: false } : false,
     } : {
         host: process.env.PGHOST || 'localhost',
@@ -129,7 +143,8 @@ async function initDb() {
             pgPool = null;
         }
         if (requirePostgres) {
-            throw new Error(`PostgreSQL is required in production but connection failed: ${err.message}`);
+            console.error('PostgreSQL is required (DATABASE_URL is set). Refusing SQLite fallback.');
+            throw err;
         }
         console.warn('Falling back to embedded SQLite database...');
     }
