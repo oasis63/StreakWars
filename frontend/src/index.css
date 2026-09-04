@@ -441,6 +441,43 @@ html.mode-light .sw-codeblock .hover\:text-white:hover {
   color: #ffffff !important;
 }
 
+.theme-toggle-thumb {
+  transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes modeSwapPulse {
+  0% { filter: brightness(1.15) saturate(1.1); }
+  40% { filter: brightness(0.88); }
+  100% { filter: none; }
+}
+
+html.mode-swap,
+html.mode-swap body {
+  animation: modeSwapPulse 0.45s ease;
+}
+
+::view-transition-old(root) {
+  animation: themeFadeOut 0.28s ease both;
+}
+
+::view-transition-new(root) {
+  animation: themeReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: var(--theme-x, 50%) var(--theme-y, 50%);
+}
+
+@keyframes themeFadeOut {
+  to { opacity: 0; }
+}
+
+@keyframes themeReveal {
+  from {
+    clip-path: circle(0% at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;
