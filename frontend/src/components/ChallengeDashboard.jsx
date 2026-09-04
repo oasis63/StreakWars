@@ -134,7 +134,7 @@ export default function ChallengeDashboard({
   const lastPlaceUser = data.leaderboard && data.leaderboard.length > 1
     ? data.leaderboard[data.leaderboard.length - 1]
     : null;
-  const leader = data.leaderboard?.[0];
+  const champion = (data.leaderboard || []).find((u) => u.rank === 1) || data.leaderboard?.[0];
   const duration = data.challenge_duration_days || 30;
   const currentDay = Math.min(data.current_day || 1, duration);
   const previewReport = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('previewReport') === '1';
@@ -214,9 +214,9 @@ export default function ChallengeDashboard({
               </p>
             </div>
             <div className="sw-card px-5 py-4">
-              <p className="sw-label">{lastPlaceUser ? 'Wooden spoon' : 'Field'}</p>
-              <p className={`mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase ${lastPlaceUser ? 'text-coral' : ''}`}>
-                {lastPlaceUser ? lastPlaceUser.name : `${data.leaderboard?.length || 0} players`}
+              <p className="sw-label">Champion</p>
+              <p className={`mt-2 text-[1.35rem] sm:text-2xl font-semibold tracking-tight truncate uppercase ${champion ? 'text-volt' : ''}`}>
+                {champion ? champion.name : `${data.leaderboard?.length || 0} players`}
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function ChallengeDashboard({
               <div>
                 <p className="sw-kicker mb-1">Final</p>
                 <p className="text-[15px] text-cream leading-relaxed">
-                  {leader ? `${leader.name} takes the circuit` : 'The circuit is over'}
+                  {champion ? `${champion.name} takes the circuit` : 'The circuit is over'}
                   {lastPlaceUser ? ` · ${lastPlaceUser.name} holds the wooden spoon` : ''}
                 </p>
               </div>
@@ -280,14 +280,14 @@ export default function ChallengeDashboard({
                 challengeEnded={challengeOver}
                 onSelectUser={(userId) => setSelectedUserId(userId)}
               />
-              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={leader?.name} />
+              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={champion?.name} />
             </>
           )}
 
           {activeTab === 'track' && (
             <>
               <RaceTrack leaderboard={data.leaderboard} />
-              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={leader?.name} />
+              <RaceWormChart wormData={data.worm_data} leaderboard={data.leaderboard} leaderName={champion?.name} />
             </>
           )}
 
