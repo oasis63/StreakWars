@@ -84,6 +84,51 @@ async function migratePostgres(pool) {
         const res = await pool.query(sql, params);
         return { rows: res.rows, rowCount: res.rowCount };
     }, true);
+
+    await repairOrphanedChallengeData(pool);
+}
+
+async function repairOrphanedChallengeData(pool) {
+    const challenges = await pool.query(`SELECT id FROM challenges ORDER BY id ASC`);
+    if (!challenges.rows.length) {
+        console.warn('Repair: no challenges found; scoring rows cannot be reattached.');
+        return;
+    }
+    const challengeId = challenges.rows[0].id;
+
+    await pool.query(`
+        INSERT INTO challenge_members (challenge_id, user_id, role, name, leetcode_username, color, emoji, car_emoji)
+        SELECT $1, u.id, 'participant', u.name, u.leetcode_username,
+               COALESCE(u.color, '#6366f1'), COALESCE(u.emoji, '👤'), COALESCE(u.car_emoji, '🏎️')
+        FROM users u
+        WHERE COALESCE(u.is_deleted, 0) = 0 AND COALESCE(u.is_participant, 1) = 1
+        ON CONFLICT (challenge_id, user_id) DO NOTHING
+    `, [challengeId]).catch((err) => console.warn('Repair members skipped:', err.message));
+
+    const tables = ['user_stats', 'credited_problems', 'processed_submissions', 'challenge_baselines', 'forum_posts'];
+    for (const table of tables) {
+        await pool.query(
+            `UPDATE ${table} SET challenge_id = $1 WHERE challenge_id IS NULL`,
+            [challengeId]
+        ).catch(() => {});
+        await pool.query(
+            `UPDATE ${table} t SET challenge_id = $1
+             WHERE t.challenge_id IS NOT NULL
+               AND NOT EXISTS (SELECT 1 FROM challenges c WHERE c.id = t.challenge_id)`,
+            [challengeId]
+        ).catch(() => {});
+    }
+
+    const counts = await pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM users) AS users,
+          (SELECT COUNT(*)::int FROM challenges) AS challenges,
+          (SELECT COUNT(*)::int FROM challenge_members) AS members,
+          (SELECT COUNT(*)::int FROM credited_problems) AS credited,
+          (SELECT COUNT(*)::int FROM user_stats) AS stats
+    `);
+    const c = counts.rows[0] || {};
+    console.log(`Repair: users=${c.users} challenges=${c.challenges} members=${c.members} credited=${c.credited} stats=${c.stats} attached_to_challenge=${challengeId}`);
 }
 
 async function rebuildPgScoringTables(pool) {
